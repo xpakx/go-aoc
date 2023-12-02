@@ -9,19 +9,22 @@ import (
 )
 
 func main() {
-	fmt.Println("Advent of Code, day 2*")
-	fmt.Println("==========")
-	fmt.Println()
-	fmt.Println("-= * =-")
-	result := first_star()
-	fmt.Println(result)
-	fmt.Println("-= ** =-")
-	secondResult := second_star()
-	fmt.Println(secondResult)
+	fmt.Println("Advent of Code, day 2")
+	fmt.Println("=====================")
+	result := solve()
+	fmt.Print("*  ")
+	fmt.Println(result.firstStar)
+	fmt.Print("** ")
+	fmt.Println(result.secondStar)
 
 }
 
-func first_star() int {
+type Results struct {
+	firstStar int
+	secondStar int
+}
+
+func solve() Results {
 	readFile, err := os.Open("input.txt")
 
 	if err != nil {
@@ -34,42 +37,32 @@ func first_star() int {
 	maxGreen := 13
 	maxBlue := 14
 	fileScanner.Split(bufio.ScanLines)
-	var result int = 0
+	var first int = 0
+	var second int = 0
 
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
-		id, red, green, blue := getMax(line)
-		if red <= maxRed && green <= maxGreen && blue <= maxBlue {
-			result += id
+		game := getMax(line)
+
+		if game.red <= maxRed && game.green <= maxGreen && game.blue <= maxBlue {
+			first += game.id
 		}
+
+		power := game.red * game.green * game.blue
+		second += power
 	}
 	readFile.Close()
-	return result
+	return Results{first, second}
 }
 
-func second_star() int {
-	readFile, err := os.Open("input.txt")
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fileScanner := bufio.NewScanner(readFile)
-
-	fileScanner.Split(bufio.ScanLines)
-	var result int = 0
-
-	for fileScanner.Scan() {
-		line := fileScanner.Text()
-		_, red, green, blue := getMax(line)
-		power := red*green*blue
-		result += power
-	}
-	readFile.Close()
-	return result 
+type GameData struct {
+	id int
+	red int
+	green int
+	blue int
 }
 
-func getMax(line string) (int, int, int, int) {
+func getMax(line string) GameData {
 	maxRed := 0
 	maxGreen := 0
 	maxBlue := 0
@@ -95,5 +88,5 @@ func getMax(line string) (int, int, int, int) {
 			}
 		}
 	}
-	return idNum, maxRed, maxGreen, maxBlue
+	return GameData{id: idNum, red: maxRed, green: maxGreen, blue: maxBlue}
 }
