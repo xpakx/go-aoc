@@ -21,7 +21,18 @@ func main() {
 	fileScanner.Split(bufio.ScanLines)
 
 	for fileScanner.Scan() {
-		fmt.Println(fileScanner.Text())
+		line := fileScanner.Text()
+		chars := []int32(line)
+		i := 0
+		for chars[i] > 57 || chars[i] < 48 {
+			i++
+		}
+		j := len(chars) - 1
+		for chars[j] > 57 || chars[j] < 48 {
+			j--
+		}
+		fmt.Print(string(chars[i]))
+		fmt.Println(string(chars[j]))
 	}
 
 	readFile.Close()
