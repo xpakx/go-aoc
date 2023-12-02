@@ -19,6 +19,7 @@ func main() {
 	fileScanner := bufio.NewScanner(readFile)
 
 	fileScanner.Split(bufio.ScanLines)
+	var result int32 = 0
 
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
@@ -31,9 +32,12 @@ func main() {
 		for chars[j] > 57 || chars[j] < 48 {
 			j--
 		}
-		fmt.Print(string(chars[i]))
-		fmt.Println(string(chars[j]))
+		first := chars[i] - 48
+		second := chars[j] - 48
+		number := 10*first + second
+		result += number
 	}
+	fmt.Println(result)
 
 	readFile.Close()
 }
