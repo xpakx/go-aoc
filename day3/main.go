@@ -14,6 +14,9 @@ func main() {
 	result := solve()
 	fmt.Print("*  ")
 	fmt.Println(result)
+	result = solveSecond()
+	fmt.Print("** ")
+	fmt.Println(result)
 }
 
 func solve() int {
@@ -122,4 +125,116 @@ type Number struct {
 	value int
 	start int
 	end int
+}
+
+type Gear struct {
+	position int
+	adjacent int
+	ratio int
+}
+
+func solveSecond() int {
+	readFile, err := os.Open("input.txt")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fileScanner := bufio.NewScanner(readFile)
+
+	fileScanner.Split(bufio.ScanLines)
+	last := make([]int, 140)
+	currLine := make([]int, 140)
+	for i := range last {
+		last[i] = 0
+	}
+	gearsLast := make([]Gear, 0)
+	gears := make([]Gear, 0)
+	result := 0
+
+	for fileScanner.Scan() {
+		line := fileScanner.Text()
+		chars := []int32(line)
+		current := 0
+		start := 0
+		for i, char := range chars {
+			currLine[i] = 0
+			if char <= 57 && char >= 48 {
+				if current == 0 {
+					start = i
+				}
+				digit := int(char-48)
+				current *= 10
+				current += digit
+			} else if current > 0 {
+				for j:=start; j<i; j++ {
+					currLine[j] = current
+				}
+				current = 0
+			}
+			if i + 1 == len(chars) && current > 0 {
+				for j:=start; j<i; j++ {
+					currLine[j] = current
+				}
+				current = 0
+			}
+			if (char > 57 || char < 48) && char != 46 {
+				gear := Gear{i, 0, 1}
+				gears = append(gears, gear)
+			}
+		}
+
+		for _, gear := range gearsLast {
+			if currLine[gear.position] != 0 {
+				gear.adjacent += 1
+				gear.ratio *= currLine[gear.position]
+			} else {
+				if gear.position > 0 && currLine[gear.position-1] != 0 {
+					gear.adjacent += 1
+					gear.ratio *= currLine[gear.position-1]
+				}
+				if gear.position + 1 < len(chars) && currLine[gear.position+1] != 0 {
+					gear.adjacent += 1
+					gear.ratio *= currLine[gear.position+1]
+				}
+			}
+			if gear.adjacent == 2 {
+				result += gear.ratio
+			}
+		}
+		gearsLast = nil
+
+		for _, gear := range gears {
+			if gear.position > 0 && currLine[gear.position-1] != 0 {
+				gear.adjacent += 1
+				gear.ratio *= currLine[gear.position-1]
+			}
+			if gear.position + 1 < len(chars) && currLine[gear.position+1] != 0 {
+				gear.adjacent += 1
+				gear.ratio *= currLine[gear.position+1]
+			}
+
+			if last[gear.position] != 0 {
+				gear.adjacent += 1
+				gear.ratio *= last[gear.position]
+			} else {
+				if gear.position > 0 && last[gear.position-1] != 0 {
+					gear.adjacent += 1
+					gear.ratio *= last[gear.position-1]
+				}
+				if gear.position + 1 < len(chars) && last[gear.position+1] != 0 {
+					gear.adjacent += 1
+					gear.ratio *= last[gear.position+1]
+				}
+			}
+			gearsLast = append(gearsLast, gear)
+		}
+		gears = nil
+		
+		for i := range last {
+			last[i] = currLine[i]
+		}
+	}
+	readFile.Close()
+	return result
 }
