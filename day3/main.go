@@ -37,7 +37,6 @@ func solve() int {
 
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
-		fmt.Println(line)
 		chars := []int32(line)
 		current := 0
 		start := 0
@@ -54,13 +53,17 @@ func solve() int {
 				current = 0
 				numbers = append(numbers, num)
 			}
+			if i + 1 == len(chars) && current > 0 {
+				num := Number{current, start, i-1}
+				current = 0
+				numbers = append(numbers, num)
+			}
 			if (char > 57 || char < 48) && char != 46 {
 				currLine[i] = true
 			} else {
 				currLine[i] = false
 			}
 		}
-		fmt.Println("last")
 		for _, num := range numbersLast {
 			start := num.start
 			if num.start > 0 {
@@ -78,11 +81,9 @@ func solve() int {
 			}
 			if test {
 				result += num.value
-				fmt.Println("added", num.value)
 			}
 		}
 		numbersLast = nil
-		fmt.Println("current")
 
 		for _, num := range numbers {
 			start := num.start
@@ -102,8 +103,6 @@ func solve() int {
 
 			if test || (num.start > 0 && currLine[num.start-1]) || (num.end+1 < len(chars) && currLine[num.end+1]) {
 				result += num.value
-				fmt.Println("added", num.value)
-
 			} else {
 				numbersLast = append(numbersLast, num)
 			}
