@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"bufio"
 	"os"
-	// "strings"
-	// "strconv"
 )
 
 func main() {

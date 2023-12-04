@@ -16,7 +16,6 @@ func main() {
 	fmt.Println(result.firstStar)
 	fmt.Print("** ")
 	fmt.Println(result.secondStar)
-
 }
 
 type Results struct {

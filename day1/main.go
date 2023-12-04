@@ -7,14 +7,13 @@ import (
 )
 
 func main() {
+	fmt.Println("Advent of Code, day 1")
+	fmt.Println("=====================")
 	first_star()
 	second_star()
 }
 
 func first_star() {
-	fmt.Println("Advent of Code, day 1")
-	fmt.Println("----------")
-
 	readFile, err := os.Open("input.txt")
 
 	if err != nil {
@@ -42,15 +41,13 @@ func first_star() {
 		number := 10*first + second
 		result += number
 	}
+	fmt.Print("*  ")
 	fmt.Println(result)
 
 	readFile.Close()
 }
 
 func second_star() {
-	fmt.Println("Advent of Code, day 1")
-	fmt.Println("----------")
-
 	readFile, err := os.Open("input.txt")
 
 	if err != nil {
@@ -138,6 +135,7 @@ func second_star() {
 		number := 10*first + second
 		result += number
 	}
+	fmt.Print("** ")
 	fmt.Println(result)
 
 	readFile.Close()
