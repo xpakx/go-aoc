@@ -48,7 +48,7 @@ type Game struct {
 }
 
 func ParseLine(line string) Game {
-	reg := regexp.MustCompile("Card (?P<Id>\\d+): (?P<Winning>.*) \\| (?P<Numbers>.*)")
+	reg := regexp.MustCompile("Card\\s+(?P<Id>\\d+): (?P<Winning>.*) \\| (?P<Numbers>.*)")
 	match := reg.FindStringSubmatch(line)
 	id, _ := strconv.Atoi(match[1])
 	winning := ParseList(match[2])
