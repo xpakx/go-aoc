@@ -12,12 +12,14 @@ import (
 func main() {
 	fmt.Println("Advent of Code, day 4")
 	fmt.Println("=====================")
-	result := solve()
+	first, second := solve()
 	fmt.Print("*  ")
-	fmt.Println(result)
+	fmt.Println(first)
+	fmt.Print("** ")
+	fmt.Println(second)
 }
 
-func solve() int {
+func solve() (int, int) {
 	readFile, err := os.Open("input.txt")
 
 	if err != nil {
@@ -27,18 +29,31 @@ func solve() int {
 	fileScanner := bufio.NewScanner(readFile)
 
 	fileScanner.Split(bufio.ScanLines)
-	result := 0
+	first := 0
+	second := 0
+	numbers := make([]int, 213)
+	for i:=0; i<len(numbers); i++ {
+		numbers[i] = 1
+	}
 
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
 		game := ParseLine(line)
-		fmt.Printf("%#v\n", game)
 		common := Intersection(game.numbers, game.winning)
-		fmt.Println(common)
-		result += CalculatePoints(len(common))
+		first += CalculatePoints(len(common))
+		for i:=1; i<=len(common); i++ {
+			id := game.id - 1 + i
+			if id < len(numbers) {
+				numbers[id] += 1*numbers[game.id-1]
+			}
+		}
 	}
 	readFile.Close()
-	return result
+
+	for _, num := range numbers {
+		second += num
+	}
+	return first, second
 }
 
 type Game struct {
