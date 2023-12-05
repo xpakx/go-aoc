@@ -30,32 +30,33 @@ func solve() int {
 
 	seedsLoaded := false
 	seeds := make([]int, 0)
-	newSeeds := make([]int, 0)
+	newSeeds := make([]bool, 0)
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
 		if !seedsLoaded {
 			seeds = ParseSeeds(line)
-			newSeeds = make([]int, len(seeds))
+			newSeeds = make([]bool, len(seeds))
 			for i := range seeds {
-				newSeeds[i] = seeds[i]
+				newSeeds[i] = false
 			}
 			seedsLoaded = true
 		} else if IsHeader(line) {
 			for i := range seeds {
-				seeds[i] = newSeeds[i]
+				newSeeds[i] = false
 			}
 		} else if line != "" {
 			rng := ParseRange(line)
 			for i := range seeds {
-				if newSeeds[i] == seeds[i] {
-					newSeeds[i] = rng.Transform(seeds[i])
+				if !newSeeds[i] && rng.InRange(seeds[i]) {
+					seeds[i] = rng.Transform(seeds[i])
+					newSeeds[i] = true
 				}
 			}
 		}
 	}
 	readFile.Close()
 
-	return getMin(newSeeds)
+	return getMin(seeds)
 }
 
 func getMin(list []int) int {
@@ -121,8 +122,9 @@ func (rng Range) ToEnd() int {
 }
 
 func (rng Range) Transform(number int) int {
-	if number < rng.fromStart || number > rng.FromEnd() {
-		return number
-	}
 	return number - rng.fromStart + rng.toStart
+}
+
+func (rng Range) InRange(number int) bool {
+	return number >= rng.fromStart && number <= rng.FromEnd() 
 }
