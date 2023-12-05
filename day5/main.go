@@ -12,9 +12,12 @@ import (
 func main() {
 	fmt.Println("Advent of Code, day 5")
 	fmt.Println("=====================")
-	first:= solve()
+	first := solve()
 	fmt.Print("*  ")
 	fmt.Println(first)
+	second := solveSecond()
+	fmt.Print("** ")
+	fmt.Println(second)
 }
 
 func solve() int {
@@ -69,11 +72,30 @@ func getMin(list []int) int {
 	return min
 }
 
+func getMinRange(list []SeedRange) int {
+	min := list[0].start
+	for i:=1; i<len(list); i++ {
+		if list[i].start < min {
+			min = list[i].start
+		}
+	}
+	return min
+}
+
 func ParseSeeds(line string) []int {
 	reg := regexp.MustCompile("seeds: (.*)$")
 	match := reg.FindStringSubmatch(line)
 	numbers := ParseList(match[1])
 	return numbers
+}
+
+func ParseSeedRanges(line string) []SeedRange {
+	numbers := ParseSeeds(line)
+	seedRanges := make([]SeedRange, 0)
+	for i:=0; i<len(numbers); i+=2 {
+		seedRanges = append(seedRanges, SeedRange{numbers[i], numbers[i+1]})
+	}
+	return seedRanges
 }
 
 func ParseList(list string) []int {
@@ -125,6 +147,116 @@ func (rng Range) Transform(number int) int {
 	return number - rng.fromStart + rng.toStart
 }
 
+func (rng Range) TransformRange(seeds SeedRange) SeedRange {
+	return SeedRange{seeds.start - rng.fromStart + rng.toStart, seeds.length}
+}
+
 func (rng Range) InRange(number int) bool {
 	return number >= rng.fromStart && number <= rng.FromEnd() 
+}
+
+type SeedRange struct {
+	start int
+	length int
+}
+
+func (rng SeedRange) End() int {
+	return rng.start + rng.length - 1
+}
+
+func solveSecond() int {
+	readFile, err := os.Open("input.txt")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fileScanner := bufio.NewScanner(readFile)
+
+	fileScanner.Split(bufio.ScanLines)
+
+	seedsLoaded := false
+	seedRanges := make([]SeedRange, 0)
+	newRanges := make([]SeedRange, 0)
+	for fileScanner.Scan() {
+		line := fileScanner.Text()
+		if !seedsLoaded {
+			seedRanges = ParseSeedRanges(line)
+			seedsLoaded = true
+		} else if IsHeader(line) {
+			for _, r := range newRanges {
+				seedRanges = append(seedRanges, r)
+			}
+			newRanges = nil
+		} else if line != "" {
+			rng := ParseRange(line)
+			transformed, untransformed := SplitRanges(rng, seedRanges)
+			for _, r := range transformed {
+				newRanges = append(newRanges, r)
+			}
+			seedRanges = nil
+			for _, r := range untransformed {
+				seedRanges = append(seedRanges, r)
+			}
+		}
+	}
+	readFile.Close()
+	for _, r := range newRanges {
+		seedRanges = append(seedRanges, r)
+	}
+
+	return getMinRange(seedRanges)
+}
+
+func SplitRanges(rng Range, seedRanges []SeedRange) ([]SeedRange, []SeedRange) {
+	transformed := make([]SeedRange, 0)
+	untransformed := make([]SeedRange, 0)
+	for _, r  := range seedRanges {
+		intersection := GetIntersection(rng, r)
+		if intersection.length != 0 {
+			newRange := rng.TransformRange(intersection) 
+			transformed = append(transformed, newRange)
+			left := GetLeft(rng, r)
+			right := GetLeft(rng, r)
+			if left.length != 0 {
+				untransformed = append(untransformed, left)
+			}
+			if right.length != 0 {
+				untransformed = append(untransformed, right)
+			}
+		} else {
+			untransformed = append(untransformed, r)
+		}
+	}
+	return transformed, untransformed
+}
+
+func GetIntersection(rng Range, seedRange SeedRange) SeedRange {
+	if rng.fromStart > seedRange.End() || rng.FromEnd() < seedRange.start {
+		return SeedRange{0, 0}
+	}
+	if rng.fromStart <= seedRange.start && rng.FromEnd() >= seedRange.End() {
+		return seedRange
+	}
+	if rng.fromStart > seedRange.start && rng.FromEnd() < seedRange.End() {
+		return SeedRange{rng.fromStart, rng.length}
+	}
+	if rng.fromStart >= seedRange.start {
+		return SeedRange{rng.fromStart, seedRange.End() - rng.fromStart + 1}
+	}
+	return SeedRange{seedRange.start, rng.FromEnd() - seedRange.start + 1}
+}
+
+func GetLeft(rng Range, seedRange SeedRange) SeedRange {
+	if rng.fromStart <= seedRange.start {
+		return SeedRange{0, 0}
+	}
+	return SeedRange{seedRange.start, rng.fromStart - seedRange.start}
+}
+
+func GetRight(rng Range, seedRange SeedRange) SeedRange {
+	if rng.FromEnd() >= seedRange.End() {
+		return SeedRange{0, 0}
+	}
+	return SeedRange{rng.FromEnd()+1, seedRange.End() - rng.FromEnd()}
 }
