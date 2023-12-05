@@ -40,24 +40,20 @@ func solve() int {
 				newSeeds[i] = seeds[i]
 			}
 			seedsLoaded = true
-			fmt.Println(seeds)
 		} else if IsHeader(line) {
 			for i := range seeds {
 				seeds[i] = newSeeds[i]
 			}
-			fmt.Println(seeds)
-			header := ParseListHeader(line)
-			fmt.Println("From", header.from, "to", header.to)
 		} else if line != "" {
 			rng := ParseRange(line)
-			fmt.Println(rng.fromStart, "-", rng.FromEnd(), "to", rng.toStart, "-", rng.ToEnd())
 			for i := range seeds {
-				newSeeds[i] = rng.Transform(seeds[i])
+				if newSeeds[i] == seeds[i] {
+					newSeeds[i] = rng.Transform(seeds[i])
+				}
 			}
 		}
 	}
 	readFile.Close()
-	fmt.Println(newSeeds)
 
 	return getMin(newSeeds)
 }
