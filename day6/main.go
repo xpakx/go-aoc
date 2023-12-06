@@ -15,8 +15,11 @@ func main() {
 	fmt.Println("=====================")
 	input := GetInput("input.txt")
 	first := solveFirst(input)
+	second := solveSecond(input)
 	fmt.Print("*  ")
 	fmt.Println(first)
+	fmt.Print("** ")
+	fmt.Println(second)
 }
 
 func solveFirst(lines []string) int {
@@ -29,6 +32,14 @@ func solveFirst(lines []string) int {
 		result *= solution
 	}
 	return result
+}
+
+func solveSecond(lines []string) int {
+	race := ParseRace(lines[0], lines[1])
+	fmt.Println("Race with time", race.time, ", currect record:", race.distance)
+	solution := SolveRace(race)
+	fmt.Println(solution, "ways to win")
+	return solution
 }
 
 func GetInput(filename string) []string {
@@ -96,6 +107,21 @@ func ParseLine(line string) []int {
 	match := reg.FindStringSubmatch(line)
 	list := match[2]
 	return ParseList(list)
+}
+
+func ParseLineSecond(line string) int {
+	reg := regexp.MustCompile("(Time|Distance):\\s+(.*)")
+	match := reg.FindStringSubmatch(line)
+	list := match[2]
+	listFix := strings.ReplaceAll(list, " ", "")
+	result, _ := strconv.Atoi(listFix)
+	return result
+}
+
+func ParseRace(times string, distances string) Race {
+	time := ParseLineSecond(times)
+	distance := ParseLineSecond(distances)
+	return Race{time, distance}
 }
 
 func ParseList(list string) []int {
