@@ -7,18 +7,32 @@ import (
 	"regexp"
 	"strings"
 	"strconv"
+	"math"
 )
 
 func main() {
 	fmt.Println("Advent of Code, day 6")
 	fmt.Println("=====================")
-	first := solve()
+	input := GetInput("input.txt")
+	first := solveFirst(input)
 	fmt.Print("*  ")
 	fmt.Println(first)
 }
 
-func solve() int {
-	readFile, err := os.Open("input.txt")
+func solveFirst(lines []string) int {
+	races := ParseRaces(lines[0], lines[1])
+	result := 1
+	for _, race := range races {
+		fmt.Println("Race with time", race.time, ", currect record:", race.distance)
+		solution := SolveRace(race)
+		fmt.Println(solution, "ways to win")
+		result *= solution
+	}
+	return result
+}
+
+func GetInput(filename string) []string {
+	readFile, err := os.Open(filename)
 
 	if err != nil {
 		fmt.Println(err)
@@ -34,13 +48,35 @@ func solve() int {
 		lines = append(lines, line)
 	}
 	readFile.Close()
+	return lines
+}
 
-	races := ParseRaces(lines[0], lines[1])
-	for _, race := range races {
-		fmt.Println("Race with time", race.time, ", currect record:", race.distance)
+
+func SolveRace(race Race) int {
+	x1, x2 := SolveQuadraticFunction(-1, race.time, -race.distance)
+	return x1 - x2 - 1
+}
+
+// T - time for race, S - current record
+// S < V*(T-t), where t is time for holding and V is equal to t
+// S < t*(T-t)
+// 0 < -t^2 + Tt - S
+// a < 0
+func SolveQuadraticFunction(a int, b int, c int) (int, int) {
+	aa := float64(a)
+	bb := float64(b)
+	cc := float64(c)
+	delta := bb*bb - 4*aa*cc
+
+	if delta == 0 {
+		x := -b/(2*a)
+		return int(x), int(x)
 	}
-
-	return 0
+	x1 := (-bb - math.Sqrt(delta))/(2*aa)
+	x1 = math.Ceil(x1)
+	x2 := (-bb + math.Sqrt(delta))/(2*aa)
+	x2 = math.Floor(x2)
+	return int(x1), int(x2)
 }
 
 func ParseRaces(times string, distances string) []Race {
