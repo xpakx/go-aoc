@@ -13,12 +13,15 @@ func main() {
 	fmt.Println("Advent of Code, day 7")
 	fmt.Println("=====================")
 	input := GetInput("input.txt")
-	first := solve(input)
+	first := solveFirst(input)
+	second := solveSecond(input)
 	fmt.Print("*  ")
 	fmt.Println(first)
+	fmt.Print("** ")
+	fmt.Println(second)
 }
 
-func solve(lines []string) int {
+func solveFirst(lines []string) int {
 	hands := ParseHands(lines)
 	for _, hand := range hands {
 		fmt.Print("Hand:")
@@ -31,7 +34,7 @@ func solve(lines []string) int {
 	}
 	fmt.Println()
 	sort.Slice(hands, func(i, j int) bool {
-		return compare(hands[i], hands[j])
+		return compare(hands[i], hands[j], false)
 	})
 	fmt.Println("Sorted: ", hands)
 	result := 0
@@ -146,13 +149,17 @@ func (hand Hand) PrintableHandType() string {
 	return cards[hand.handType]
 }
 
-func compare(hand1 Hand, hand2 Hand) bool {
+func compare(hand1 Hand, hand2 Hand, jokers bool) bool {
 	if hand1.handType != hand2.handType {
 		return hand1.handType < hand2.handType
 	}
 	for i := range hand1.cards {
 		if hand1.cards[i] != hand2.cards[i] {
-			return compareCards(hand1.cards[i], hand2.cards[i])
+			if jokers {
+				return compareCardsWithJokers(hand1.cards[i], hand2.cards[i])
+			} else {
+				return compareCards(hand1.cards[i], hand2.cards[i])
+			}
 		}
 	}
 	return false
@@ -175,4 +182,124 @@ func compareCards(card1 string, card2 string) bool {
 		"A": 12,
 	}
 	return cards[card1] < cards[card2]
+}
+
+func compareCardsWithJokers(card1 string, card2 string) bool {
+	cards := map[string]int{
+		"J": 0,
+		"2": 1,
+		"3": 2,
+		"4": 3,
+		"5": 4,
+		"6": 5,
+		"7": 6,
+		"8": 7,
+		"9": 8,
+		"T": 9,
+		"Q": 10,
+		"K": 11,
+		"A": 12,
+	}
+	return cards[card1] < cards[card2]
+}
+
+func CalculateHandTypeWithJokers(cards []string) int {
+	hash := make(map[string]int)
+	jokers := 0
+	for _, card := range cards {
+		if card == "J" {
+			jokers += 1
+		} else if _, ok := hash[card]; ok {
+			hash[card] += 1
+		} else {
+			hash[card] = 1
+		}
+	}
+	values := make([]int, 6)
+	for i := range values {
+		values[i] = 0
+	}
+
+	for i := range hash {
+		values[hash[i]] += 1
+	}
+
+	if values[5] == 1 {
+		return Five
+	}
+	if values[4] == 1 {
+		if jokers > 0 {
+			return Five
+		}
+		return Four
+	}
+	if values[3] == 1 && values[2] == 1 {
+		return House
+	}
+	if values[3] == 1 {
+		if jokers == 1 {
+			return Four
+		}
+		if jokers > 1 {
+			return Five
+		}
+		return Three
+	}
+	if values[2] == 2 {
+		if jokers > 0 {
+			return House
+		}
+		return TwoPairs
+	}
+	if values[2] == 1 {
+		if jokers == 1 {
+			return Three
+		}
+		if jokers == 2 {
+			return Four
+		}
+		if jokers > 2 {
+			return Five
+		}
+		return Pair
+	}
+	if jokers > 3 {
+		return Five
+	}
+	if jokers == 3 {
+		return Four
+	}
+	if jokers == 2 {
+		return Three
+	}
+	if jokers == 1 {
+		return Pair
+	}
+	return HighCard
+}
+
+func solveSecond(lines []string) int {
+	hands := ParseHands(lines)
+	for i := range hands {
+		hands[i].handType = CalculateHandTypeWithJokers(hands[i].cards)
+	}
+	for _, hand := range hands {
+		fmt.Print("Hand:")
+		for _, card := range hand.cards {
+			fmt.Print(" ", card)
+		}
+		fmt.Println()
+		fmt.Println("Bid: ", hand.bid)
+		fmt.Println("Type: ", hand.PrintableHandType())
+	}
+	fmt.Println()
+	sort.Slice(hands, func(i, j int) bool {
+		return compare(hands[i], hands[j], true)
+	})
+	fmt.Println("Sorted: ", hands)
+	result := 0
+	for i := range hands {
+		result += (i+1)*hands[i].bid
+	}
+	return result
 }
