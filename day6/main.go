@@ -63,6 +63,7 @@ func GetInput(filename string) []string {
 }
 
 
+// final solutions are x, where x2 < x < x1
 func SolveRace(race Race) int {
 	x1, x2 := SolveQuadraticFunction(-1, race.time, -race.distance)
 	return x1 - x2 - 1
@@ -72,7 +73,8 @@ func SolveRace(race Race) int {
 // S < V*(T-t), where t is time for holding and V is equal to t
 // S < t*(T-t)
 // 0 < -t^2 + Tt - S
-// a < 0
+// a < 0, so solutions are between x1 and x2
+// a < 0 and sqrt(detla) > 0, so x1 > x2
 func SolveQuadraticFunction(a int, b int, c int) (int, int) {
 	aa := float64(a)
 	bb := float64(b)

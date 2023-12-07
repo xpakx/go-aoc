@@ -44,7 +44,7 @@ func solve() (int, int) {
 		for i:=1; i<=len(common); i++ {
 			id := game.id - 1 + i
 			if id < len(numbers) {
-				numbers[id] += 1*numbers[game.id-1]
+				numbers[id] += numbers[game.id-1]
 			}
 		}
 	}
@@ -72,10 +72,9 @@ func ParseLine(line string) Game {
 }
 
 func ParseList(list string) []int {
-	listWithoutDuplicatedSpaces := strings.Join(strings.Fields(list), " ")
-	listOfStrings := strings.Split(listWithoutDuplicatedSpaces, " ")
+	splitted := strings.Split(strings.Join(strings.Fields(list), " "), " ")
 	listFin := []int{}
-	for _, x := range listOfStrings {
+	for _, x := range splitted {
 		n, _ := strconv.Atoi(x)
 		listFin = append(listFin, n)
 	}
@@ -85,17 +84,14 @@ func ParseList(list string) []int {
 func Intersection(list []int, list2 []int) []int {
 	set := make([]int, 0)
 	hash := make(map[int]struct{})
-
 	for _, num := range list {
 		hash[num] = struct{}{}
 	}
-
 	for _, num := range list2 {
 		if _, ok := hash[num]; ok {
 			set = append(set, num)
 		}
 	}
-
 	return set
 }
 
