@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"strconv"
+	"sort"
 )
 
 func main() {
@@ -28,7 +29,16 @@ func solve(lines []string) int {
 		fmt.Println("Bid: ", hand.bid)
 		fmt.Println("Type: ", hand.PrintableHandType())
 	}
-	return 0
+	fmt.Println()
+	sort.Slice(hands, func(i, j int) bool {
+		return compare(hands[i], hands[j])
+	})
+	fmt.Println("Sorted: ", hands)
+	result := 0
+	for i := range hands {
+		result += (i+1)*hands[i].bid
+	}
+	return result
 }
 
 func GetInput(filename string) []string {
@@ -134,4 +144,35 @@ func (hand Hand) PrintableHandType() string {
 		Five: "Five of a kind",
 	}
 	return cards[hand.handType]
+}
+
+func compare(hand1 Hand, hand2 Hand) bool {
+	if hand1.handType != hand2.handType {
+		return hand1.handType < hand2.handType
+	}
+	for i := range hand1.cards {
+		if hand1.cards[i] != hand2.cards[i] {
+			return compareCards(hand1.cards[i], hand2.cards[i])
+		}
+	}
+	return false
+}
+
+func compareCards(card1 string, card2 string) bool {
+	cards := map[string]int{
+		"2": 0,
+		"3": 1,
+		"4": 2,
+		"5": 3,
+		"6": 4,
+		"7": 5,
+		"8": 6,
+		"9": 7,
+		"T": 8,
+		"J": 9,
+		"Q": 10,
+		"K": 11,
+		"A": 12,
+	}
+	return cards[card1] < cards[card2]
 }
