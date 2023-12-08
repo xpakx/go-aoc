@@ -11,17 +11,21 @@ func main() {
 	fmt.Println("Advent of Code, day 8")
 	fmt.Println("=====================")
 	directions, nodes := GetInput("input.txt")
-	first := Solve(directions, nodes)
+	first, second := Solve(directions, nodes)
 	fmt.Print("*  ")
 	fmt.Println(first)
+	fmt.Print("** ")
+	fmt.Println(second)
 }
 
-func Solve(directionString string, nodeList []string) int {
+func Solve(directionString string, nodeList []string) (int, int) {
 	nodes := ParseNodes(nodeList)
 	directions := ParseDirections(directionString)
 	nodeMap := constructMap(nodes)
-	fmt.Println(nodeMap)
-	return Walk(directions, nodeMap)
+
+	first := Walk(directions, nodeMap)
+	second := WalkSecond(directions, nodeMap)
+	return first, second
 }
 
 func GetInput(filename string) (string, []string) {
@@ -114,4 +118,53 @@ type Node struct {
 	name string
 	left string
 	right string
+}
+
+type MapKey struct {
+	nodeName string
+	dirPos int
+}
+
+type Cycle struct {
+	ends []int
+	cycle_start int
+	cycle_end int
+}
+
+func FindCycle(start string, dirs []bool, nodes map[string]Node) Cycle {
+	hash := make(map[MapKey]int)
+	steps := 0
+	curr := start
+	ends := make([]int, 0)
+	for true {
+		node := nodes[curr]
+		dir := steps % len(dirs)
+		if dirs[dir] {
+			curr = node.left
+		} else {
+			curr = node.right
+		}
+		if node.name[len(node.name)-1:] == "Z" {
+			ends = append(ends, steps)
+		}
+		key := MapKey{node.name, dir}
+		if value, ok := hash[key]; ok {
+			return Cycle{ends, value, steps}
+		}
+		hash[key] = steps
+		steps++
+	}
+	return Cycle{ends, 0, 0}
+}
+
+func WalkSecond(dirs []bool, nodes map[string]Node) int {
+	for k := range nodes {
+		if k[len(k)-1:] == "A" {
+			fmt.Println("Key", k)
+			cycle := FindCycle(k, dirs, nodes)
+			fmt.Println("Cycle:", cycle.cycle_start, cycle.cycle_end)
+			fmt.Println("Ends:", cycle.ends)
+		}
+	}
+	return 0
 }
