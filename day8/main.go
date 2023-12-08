@@ -154,17 +154,46 @@ func FindCycle(start string, dirs []bool, nodes map[string]Node) Cycle {
 		hash[key] = steps
 		steps++
 	}
-	return Cycle{ends, 0, 0}
+	return Cycle{ends, -1, -1}
 }
 
 func WalkSecond(dirs []bool, nodes map[string]Node) int {
+	cycles := make([]Cycle, 0)
 	for k := range nodes {
 		if k[len(k)-1:] == "A" {
 			fmt.Println("Key", k)
 			cycle := FindCycle(k, dirs, nodes)
 			fmt.Println("Cycle:", cycle.cycle_start, cycle.cycle_end)
 			fmt.Println("Ends:", cycle.ends)
+			cycles = append(cycles, cycle)
 		}
 	}
-	return 0
+	fmt.Println()
+	// there is only one end node in each cycle in input data
+	// and distance from ??A to ??Z is equal to distance from ??Z to end of the cycle
+	// so the solution is equivalent to finding LCM
+	// nonetheless, it would be nice to generalize this to other scenarios
+	ends := make([]int, 0)
+	for _, cycle := range cycles {
+		ends = append(ends, cycle.ends[0])
+	}
+	
+	return LCM(ends)
+}
+
+func GCD(a int, b int) int {
+      for b != 0 {
+              t := b
+              b = a % b
+              a = t
+      }
+      return a
+}
+
+func LCM(nums []int) int {
+      result := nums[0] * nums[1] / GCD(nums[0], nums[1])
+      for i := 2; i < len(nums); i++ {
+              result = LCM([]int{result, nums[i]})
+      }
+      return result
 }
