@@ -11,30 +11,17 @@ func main() {
 	fmt.Println("Advent of Code, day 8")
 	fmt.Println("=====================")
 	directions, nodes := GetInput("input.txt")
-	first := solve(directions, nodes)
+	first := Solve(directions, nodes)
 	fmt.Print("*  ")
 	fmt.Println(first)
 }
 
-func solve(directionString string, nodeList []string) int {
+func Solve(directionString string, nodeList []string) int {
 	nodes := ParseNodes(nodeList)
 	directions := ParseDirections(directionString)
-	for _, node := range nodes {
-		fmt.Println("Node", node.name)
-		fmt.Println(node.left, "<- ->", node.right)
-		fmt.Println()
-	}
-	for _, dir := range directions {
-		if dir {
-			fmt.Print("Left ")
-		} else {
-			fmt.Print("Right ")
-		}
-	}
-	fmt.Println()
 	nodeMap := constructMap(nodes)
 	fmt.Println(nodeMap)
-	return 0
+	return Walk(directions, nodeMap)
 }
 
 func GetInput(filename string) (string, []string) {
@@ -105,6 +92,22 @@ func constructMap(nodes []Node) map[string]Node {
 		hash[node.name] = node
 	}
 	return hash
+}
+
+func Walk(dirs []bool, nodes map[string]Node) int {
+	steps := 0
+	curr := "AAA"
+	for curr != "ZZZ" {
+		node := nodes[curr]
+		dir := steps % len(dirs)
+		if dirs[dir] {
+			curr = node.left
+		} else {
+			curr = node.right
+		}
+		steps++
+	}
+	return steps
 }
 
 type Node struct {
