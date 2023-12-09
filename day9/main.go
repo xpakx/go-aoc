@@ -11,12 +11,14 @@ import (
 func main() {
 	fmt.Println("Advent of Code, day 9")
 	fmt.Println("=====================")
-	first := solve("input.txt")
+	first, second := solve("input.txt")
 	fmt.Print("*  ")
 	fmt.Println(first)
+	fmt.Print("** ")
+	fmt.Println(second)
 }
 
-func solve(filename string) int {
+func solve(filename string) (int, int) {
 	readFile, err := os.Open(filename)
 
 	if err != nil {
@@ -27,19 +29,20 @@ func solve(filename string) int {
 
 	fileScanner.Split(bufio.ScanLines)
 
-	result := 0
+	first := 0
+	second := 0
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
 		nums := ParseList(line)
 		prediction := Predict(nums)
-		fmt.Println(prediction)
-		fmt.Println()
-		result += prediction
+		first += prediction
+		secondPrediction := PredictBackward(nums)
+		second += secondPrediction
 
 	}
 	readFile.Close()
 
-	return result
+	return first, second
 }
 
 func ParseList(list string) []int {
@@ -71,9 +74,16 @@ func Predict(list []int) int {
 	}
 	last := 0
 	for i:=len(lists)-2; i>=0; i-- {
-		fmt.Println(last)
 		last = lists[i][len(lists[i])-1] + last
 
 	}
 	return last
+}
+
+func PredictBackward(list []int) int {
+	reversed := make([]int, len(list))
+	for i := range list {
+		reversed[i] = list[len(list)-1-i]
+	}
+	return Predict(reversed)
 }
