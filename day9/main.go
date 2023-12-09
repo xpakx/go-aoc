@@ -27,15 +27,19 @@ func solve(filename string) int {
 
 	fileScanner.Split(bufio.ScanLines)
 
+	result := 0
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
 		nums := ParseList(line)
-		fmt.Println(nums)
+		prediction := Predict(nums)
+		fmt.Println(prediction)
+		fmt.Println()
+		result += prediction
 
 	}
 	readFile.Close()
 
-	return 0
+	return result
 }
 
 func ParseList(list string) []int {
@@ -46,4 +50,30 @@ func ParseList(list string) []int {
 		listFin = append(listFin, n)
 	}
 	return listFin
+}
+
+func Predict(list []int) int {
+	zeroes := false
+	lists := make([][]int, 0)
+	lists = append(lists, list)
+	for !zeroes {
+		oldList := lists[len(lists)-1]
+		lastLen := len(oldList)
+		zeroes = true
+		newList := make([]int, lastLen-1)
+		for i:=0; i<lastLen-1; i++ {
+			newList[i] = oldList[i+1]-oldList[i]
+			if newList[i] != 0 {
+				zeroes= false
+			}
+		}
+		lists = append(lists, newList)
+	}
+	last := 0
+	for i:=len(lists)-2; i>=0; i-- {
+		fmt.Println(last)
+		last = lists[i][len(lists[i])-1] + last
+
+	}
+	return last
 }
