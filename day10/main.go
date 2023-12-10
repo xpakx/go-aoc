@@ -14,9 +14,12 @@ func main() {
 	pipeMap := LoadMap("input.txt")
 	dist := CalcDistances(pipeMap)
 	first := solveFirst(dist)
-	solveSecond(pipeMap, dist)
+	second := solveSecond(pipeMap, dist)
+	PrintMap(pipeMap, dist)
 	fmt.Print("*  ")
 	fmt.Println(first)
+	fmt.Print("** ")
+	fmt.Println(second)
 }
 
 func solveFirst(dist map[Coord]int) int {
@@ -29,19 +32,27 @@ func solveFirst(dist map[Coord]int) int {
 	return maxValue
 }
 
+// using nonzero winding rule
 func solveSecond(pipeMap [][]Node, dist map[Coord]int) int {
-	dots := 0
-	visited := make(map[Coord]struct{})
-	for _, a := range pipeMap {
-		for _, n := range a {
-			if _, ok := visited[n.coord]; ok && dist[n.coord] == math.MaxInt {
-				dots += 1
-				visited[n.coord] = struct{}{}
+	counter := 0
+	inside := 0
+	for _, line := range pipeMap {
+		for _, n := range line {
+			if CheckChange(n.coord, pipeMap, dist) {
+				if DoesPathIntersectUpward(n.coord, pipeMap, dist) {
+					counter += 1
+				} else {
+					counter -= 1
+				}
+			}
+			if distance, ok := dist[n.coord]; !ok || distance == math.MaxInt {
+				if counter % 2 != 0 {
+					inside += 1
+				}
 			}
 		}
 	}
-	fmt.Println(dots)
-	return 0
+	return inside
 }
 
 
@@ -208,4 +219,47 @@ func (node Node) GetNeighboursCoord() []Coord {
 
 func (node Node) IsPipe() bool {
 	return node.north || node.south || node.west || node.east
+}
+
+func PrintMap(pipeMap [][]Node, dist map[Coord]int) {
+	for _, a := range pipeMap {
+		for _, n := range a {
+			if distance, ok := dist[n.coord]; ok && distance < math.MaxInt {
+				fmt.Print("#")
+			} else {
+				fmt.Print(" ")
+			}
+		}
+		fmt.Println()
+	}
+}
+
+func CheckChange(coord Coord, pipeMap [][]Node, dist map[Coord]int) bool {
+	if distance, ok := dist[coord]; !ok || distance == math.MaxInt {
+		return false
+	}
+	if coord.i == 0 {
+		return false
+	}
+	if !pipeMap[coord.i][coord.j].south {
+		return false
+	}
+	coordBelow := Coord{coord.i+1, coord.j} 
+	if distance, ok := dist[coordBelow]; !ok || distance == math.MaxInt {
+		return false
+	}
+	return true
+}
+
+func DoesPathIntersectUpward(coord Coord, pipeMap [][]Node, dist map[Coord]int) bool {
+	nodeDist := dist[coord]
+	coordBelow := Coord{coord.i+1, coord.j} 
+	belowDist := dist[coordBelow]
+	if nodeDist + 1 == belowDist {
+		return true
+	}
+	if nodeDist - 1 == belowDist {
+		return false
+	}
+	return pipeMap[coord.i][coord.j].start
 }
