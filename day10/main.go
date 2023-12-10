@@ -12,10 +12,39 @@ func main() {
 	fmt.Println("Advent of Code, day 10")
 	fmt.Println("=====================")
 	pipeMap := LoadMap("input.txt")
-	first := dijkstra(pipeMap)
+	dist := CalcDistances(pipeMap)
+	first := solveFirst(dist)
+	solveSecond(pipeMap, dist)
 	fmt.Print("*  ")
 	fmt.Println(first)
 }
+
+func solveFirst(dist map[Coord]int) int {
+	maxValue := 0
+	for _, v := range dist {
+		if v != math.MaxInt && v > maxValue {
+			maxValue = v
+		}
+	}
+	return maxValue
+}
+
+func solveSecond(pipeMap [][]Node, dist map[Coord]int) int {
+	dots := 0
+	visited := make(map[Coord]struct{})
+	for _, a := range pipeMap {
+		for _, n := range a {
+			if _, ok := visited[n.coord]; ok && dist[n.coord] == math.MaxInt {
+				dots += 1
+				visited[n.coord] = struct{}{}
+			}
+		}
+	}
+	fmt.Println(dots)
+	return 0
+}
+
+
 
 func LoadMap(filename string) [][]Node {
 	readFile, err := os.Open(filename)
@@ -112,8 +141,8 @@ type Coord struct {
 	j int
 }
 
-func dijkstra(nodeMap [][]Node) int {
-	queue := make([]Node, 0)
+func CalcDistances(nodeMap [][]Node) map[Coord]int {
+	start := make([]Node, 0)
 	dist := make(map[Coord]int)
 	for i := range nodeMap {
 		for j := range nodeMap[i] {
@@ -121,46 +150,43 @@ func dijkstra(nodeMap [][]Node) int {
 				coord := nodeMap[i][j].coord
 				dist[coord] = math.MaxInt
 				if nodeMap[i][j].start {
+					start = append(start, nodeMap[i][j])
 					dist[coord] = 0
 				}
-				queue = append(queue, nodeMap[i][j])
 			}
 		}
 	}
 
-	for len(queue) > 0 {
-		minNode := queue[0]
-		minDist := dist[minNode.coord]
-		pos := 0
-		for i, n := range queue {
-			currDist := dist[n.coord] 
-			if currDist < minDist {
-				minNode = n
-				minDist = currDist
-				pos = i
-			}
-		}
-		queue = append(queue[:pos], queue[pos+1:]...)
+	n := start[0]
 
-		neighbours := minNode.GetNeighboursCoord()
-		for _, n := range neighbours {
-			nDist := dist[n]
-			alt := minDist + 1
-			if minDist == math.MaxInt {
-				alt = math.MaxInt
-			}
-			if alt < nDist {
-				dist[n] = alt
+	neighbours := n.GetNeighboursCoord()
+	for _, ne := range neighbours {
+		prev := n.coord
+		currNode := nodeMap[ne.i][ne.j]
+		next := currNode.GetOtherCoord(prev)
+		distance := 0
+		for next != n.coord {
+			prev = currNode.coord
+			currNode = nodeMap[next.i][next.j]
+			next = currNode.GetOtherCoord(prev)
+			distance += 1
+			if dist[prev] > distance {
+				dist[prev] = distance
 			}
 		}
 	}
-	maxValue := 0
-	for _, v := range dist {
-		if v != math.MaxInt && v > maxValue {
-			maxValue = v
+
+	return dist
+}
+
+func (node Node) GetOtherCoord(enter Coord) Coord {
+	coords := node.GetNeighboursCoord()
+	for _, coord := range coords {
+		if coord.i != enter.i || coord.j != enter.j {
+			return coord
 		}
 	}
-	return maxValue
+	return Coord{-1, -1}
 }
 
 func (node Node) GetNeighboursCoord() []Coord {
