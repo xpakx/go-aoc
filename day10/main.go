@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 )
@@ -11,12 +12,9 @@ func main() {
 	fmt.Println("Advent of Code, day 10")
 	fmt.Println("=====================")
 	pipeMap := LoadMap("input.txt")
-	for _, line := range pipeMap {
-		fmt.Println(line)
-	}
-	fmt.Println()
-	// fmt.Print("*  ")
-	// fmt.Println(first)
+	first := dijkstra(pipeMap)
+	fmt.Print("*  ")
+	fmt.Println(first)
 }
 
 func LoadMap(filename string) [][]Node {
@@ -35,7 +33,6 @@ func LoadMap(filename string) [][]Node {
 	startY := 0
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
-		fmt.Println(line)
 		values := strings.Split(line, "")
 		nodes := toNodeList(values, len(result))
 		for i := range nodes {
@@ -113,4 +110,76 @@ type Node struct {
 type Coord struct {
 	i int
 	j int
+}
+
+func dijkstra(nodeMap [][]Node) int {
+	queue := make([]Node, 0)
+	dist := make(map[Coord]int)
+	for i := range nodeMap {
+		for j := range nodeMap[i] {
+			if nodeMap[i][j].IsPipe() {
+				coord := nodeMap[i][j].coord
+				dist[coord] = math.MaxInt
+				if nodeMap[i][j].start {
+					dist[coord] = 0
+				}
+				queue = append(queue, nodeMap[i][j])
+			}
+		}
+	}
+
+	for len(queue) > 0 {
+		minNode := queue[0]
+		minDist := dist[minNode.coord]
+		pos := 0
+		for i, n := range queue {
+			currDist := dist[n.coord] 
+			if currDist < minDist {
+				minNode = n
+				minDist = currDist
+				pos = i
+			}
+		}
+		queue = append(queue[:pos], queue[pos+1:]...)
+
+		neighbours := minNode.GetNeighboursCoord()
+		for _, n := range neighbours {
+			nDist := dist[n]
+			alt := minDist + 1
+			if minDist == math.MaxInt {
+				alt = math.MaxInt
+			}
+			if alt < nDist {
+				dist[n] = alt
+			}
+		}
+	}
+	maxValue := 0
+	for _, v := range dist {
+		if v != math.MaxInt && v > maxValue {
+			maxValue = v
+		}
+	}
+	return maxValue
+}
+
+func (node Node) GetNeighboursCoord() []Coord {
+	coords := make([]Coord, 0)
+	if node.north {
+		coords = append(coords, Coord{node.coord.i-1, node.coord.j})
+	}
+	if node.south {
+		coords = append(coords, Coord{node.coord.i+1, node.coord.j})
+	}
+	if node.west {
+		coords = append(coords, Coord{node.coord.i, node.coord.j-1})
+	}
+	if node.east {
+		coords = append(coords, Coord{node.coord.i, node.coord.j+1})
+	}
+	return coords
+}
+
+func (node Node) IsPipe() bool {
+	return node.north || node.south || node.west || node.east
 }
