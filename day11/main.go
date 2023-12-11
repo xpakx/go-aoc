@@ -10,22 +10,18 @@ import (
 func main() {
 	fmt.Println("Advent of Code, day 11")
 	fmt.Println("=====================")
-	galaxyMap := LoadMap("input.txt")
+	galaxyMap := LoadMap("input.txt", 1)
 	fmt.Println(galaxyMap)
 	first := CalcDistances(galaxyMap)
-	second := solveSecond(galaxyMap)
+	secondMap := LoadMap("input.txt", 1000000-1)
+	second := CalcDistances(secondMap)
 	fmt.Print("*  ")
 	fmt.Println(first)
 	fmt.Print("** ")
 	fmt.Println(second)
 }
 
-func solveSecond(galaxyMap []Galaxy) int {
-	return 0
-}
-
-
-func LoadMap(filename string) []Galaxy {
+func LoadMap(filename string, distance int) []Galaxy {
 	readFile, err := os.Open(filename)
 
 	if err != nil {
@@ -55,7 +51,7 @@ func LoadMap(filename string) []Galaxy {
 			}
 		}
 		if empty {
-			y++
+			y += distance
 		}
 		y++
 	}
@@ -65,7 +61,7 @@ func LoadMap(filename string) []Galaxy {
 		n := result[i].x
 		for j:=0; j<result[i].x; j++ {
 			if emptyColumns[j] {
-				n += 1
+				n += distance
 			}
 		}
 		result[i].x = n
