@@ -69,8 +69,14 @@ func TryToPlace(rows string, vals []int) int {
 		possibilities = nil
 		possibilities = append(possibilities, newPossibilities...)
 	}
+	result := 0
+	for _, p := range possibilities {
+		if TestOmittedPlaces(rows, p) {
+			result++
+		}
+	}
 
-	return len(possibilities)
+	return result
 }
 
 func TestPlacement(row string, start int, length int) bool {
@@ -100,4 +106,13 @@ func ParseList(list string) []int {
 		listFin = append(listFin, n)
 	}
 	return listFin
+}
+
+func TestOmittedPlaces(row string, end int) bool {
+	for i:=end; i<len(row); i++ {
+		if row[i] == '#' {
+			return false
+		}
+	}
+	return true
 }
