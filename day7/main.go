@@ -23,20 +23,9 @@ func main() {
 
 func solveFirst(lines []string) int {
 	hands := ParseHands(lines)
-	for _, hand := range hands {
-		fmt.Print("Hand:")
-		for _, card := range hand.cards {
-			fmt.Print(" ", card)
-		}
-		fmt.Println()
-		fmt.Println("Bid: ", hand.bid)
-		fmt.Println("Type: ", hand.PrintableHandType())
-	}
-	fmt.Println()
 	sort.Slice(hands, func(i, j int) bool {
 		return compare(hands[i], hands[j], false)
 	})
-	fmt.Println("Sorted: ", hands)
 	result := 0
 	for i := range hands {
 		result += (i+1)*hands[i].bid
@@ -283,20 +272,10 @@ func solveSecond(lines []string) int {
 	for i := range hands {
 		hands[i].handType = CalculateHandTypeWithJokers(hands[i].cards)
 	}
-	for _, hand := range hands {
-		fmt.Print("Hand:")
-		for _, card := range hand.cards {
-			fmt.Print(" ", card)
-		}
-		fmt.Println()
-		fmt.Println("Bid: ", hand.bid)
-		fmt.Println("Type: ", hand.PrintableHandType())
-	}
-	fmt.Println()
+
 	sort.Slice(hands, func(i, j int) bool {
 		return compare(hands[i], hands[j], true)
 	})
-	fmt.Println("Sorted: ", hands)
 	result := 0
 	for i := range hands {
 		result += (i+1)*hands[i].bid

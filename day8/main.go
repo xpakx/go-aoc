@@ -161,14 +161,11 @@ func WalkSecond(dirs []bool, nodes map[string]Node) int {
 	cycles := make([]Cycle, 0)
 	for k := range nodes {
 		if k[len(k)-1:] == "A" {
-			fmt.Println("Key", k)
 			cycle := FindCycle(k, dirs, nodes)
-			fmt.Println("Cycle:", cycle.cycle_start, cycle.cycle_end)
-			fmt.Println("Ends:", cycle.ends)
 			cycles = append(cycles, cycle)
 		}
 	}
-	fmt.Println()
+
 	// there is only one end node in each cycle in input data
 	// and distance from ??A to ??Z is equal to distance from ??Z to end of the cycle
 	// so the solution is equivalent to finding LCM

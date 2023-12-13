@@ -26,9 +26,7 @@ func solveFirst(lines []string) int {
 	races := ParseRaces(lines[0], lines[1])
 	result := 1
 	for _, race := range races {
-		fmt.Println("Race with time", race.time, ", currect record:", race.distance)
 		solution := SolveRace(race)
-		fmt.Println(solution, "ways to win")
 		result *= solution
 	}
 	return result
@@ -36,9 +34,7 @@ func solveFirst(lines []string) int {
 
 func solveSecond(lines []string) int {
 	race := ParseRace(lines[0], lines[1])
-	fmt.Println("Race with time", race.time, ", currect record:", race.distance)
 	solution := SolveRace(race)
-	fmt.Println(solution, "ways to win")
 	return solution
 }
 

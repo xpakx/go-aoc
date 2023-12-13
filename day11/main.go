@@ -11,7 +11,6 @@ func main() {
 	fmt.Println("Advent of Code, day 11")
 	fmt.Println("=====================")
 	galaxyMap := LoadMap("input.txt", 1)
-	fmt.Println(galaxyMap)
 	first := CalcDistances(galaxyMap)
 	secondMap := LoadMap("input.txt", 1000000-1)
 	second := CalcDistances(secondMap)
