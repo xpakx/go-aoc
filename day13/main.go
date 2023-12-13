@@ -26,15 +26,8 @@ func SolveSingle(input [][]rune) int {
 	result := FindSymmetry(input)
 	if result == -1 {
 		res := FindSymmetry(Transpose(input))
-		fmt.Println("transposed")
-		fmt.Println(res)
-	if res == -1 {
-		Print(input)
-	}
 		return 100*res
 	}
-		fmt.Println("not transposed")
-	fmt.Println(result)
 	return result
 }
 
@@ -70,24 +63,12 @@ func FindSymmetry(input [][]rune) int {
 	i := 0
 	j := 1
 	for i < len(input[0]) {
-		if j == len(input[0])-2 {
-			j++
-			i++
-		} else if j == len(input[0])-1 {
-			i += 2
-			if i >= len(input[0]) {
-				break
-			}
-		} else {
-			j += 2
-		}
-
 		foundDiff := false
 		start := i
 		end := j
 		for start < end && !foundDiff {
 			for n := range input {
-				if input[n][i] != input[n][j] {
+				if input[n][start] != input[n][end] {
 					foundDiff = true
 					break
 				}
@@ -97,6 +78,15 @@ func FindSymmetry(input [][]rune) int {
 		}
 		if !foundDiff {
 			return i + (j-i+1)/2
+		}
+
+		if j == len(input[0])-2 {
+			j++
+			i++
+		} else if j == len(input[0])-1 {
+			i += 2
+		} else {
+			j += 2
 		}
 	}
 	return -1
