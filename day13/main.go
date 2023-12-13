@@ -11,21 +11,23 @@ func main() {
 	fmt.Println("=====================")
 	input := Parse("input.txt")
 	fmt.Print("*  ")
-	fmt.Println(Solve(input))
+	fmt.Println(Solve(input, 0))
+	fmt.Print("** ")
+	fmt.Println(Solve(input, 1))
 }
 
-func Solve(input [][][]rune) int {
+func Solve(input [][][]rune, errors int) int {
 	result := 0
 	for _, a := range input {
-		result += SolveSingle(a)
+		result += SolveSingle(a, errors)
 	}
 	return result
 }
 
-func SolveSingle(input [][]rune) int {
-	result := FindSymmetry(input)
+func SolveSingle(input [][]rune, errors int) int {
+	result := FindSymmetry(input, errors)
 	if result == -1 {
-		res := FindSymmetry(Transpose(input))
+		res := FindSymmetry(Transpose(input), errors)
 		return 100*res
 	}
 	return result
@@ -59,24 +61,26 @@ func Parse(filename string) [][][]rune {
 	return result
 }
 
-func FindSymmetry(input [][]rune) int {
+func FindSymmetry(input [][]rune, errors int) int {
 	i := 0
 	j := 1
 	for i < len(input[0]) {
-		foundDiff := false
+		foundDiff := 0
 		start := i
 		end := j
-		for start < end && !foundDiff {
+		for start < end && foundDiff<=errors {
 			for n := range input {
 				if input[n][start] != input[n][end] {
-					foundDiff = true
-					break
+					foundDiff++
+					if foundDiff > errors {
+						break
+					}
 				}
 			}
 			start++
 			end--
 		}
-		if !foundDiff {
+		if foundDiff == errors {
 			return i + (j-i+1)/2
 		}
 
