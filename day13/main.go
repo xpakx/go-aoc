@@ -11,7 +11,31 @@ func main() {
 	fmt.Println("=====================")
 	input := Parse("input.txt")
 	fmt.Print("*  ")
-	fmt.Println(FindSymmetry(input[0]))
+	fmt.Println(Solve(input))
+}
+
+func Solve(input [][][]rune) int {
+	result := 0
+	for _, a := range input {
+		result += SolveSingle(a)
+	}
+	return result
+}
+
+func SolveSingle(input [][]rune) int {
+	result := FindSymmetry(input)
+	if result == -1 {
+		res := FindSymmetry(Transpose(input))
+		fmt.Println("transposed")
+		fmt.Println(res)
+	if res == -1 {
+		Print(input)
+	}
+		return 100*res
+	}
+		fmt.Println("not transposed")
+	fmt.Println(result)
+	return result
 }
 
 func Parse(filename string) [][][]rune {
@@ -51,6 +75,9 @@ func FindSymmetry(input [][]rune) int {
 			i++
 		} else if j == len(input[0])-1 {
 			i += 2
+			if i >= len(input[0]) {
+				break
+			}
 		} else {
 			j += 2
 		}
@@ -72,5 +99,29 @@ func FindSymmetry(input [][]rune) int {
 			return i + (j-i+1)/2
 		}
 	}
-	return 0
+	return -1
+}
+
+func Transpose(input [][]rune) [][]rune {
+	result := make([][]rune, len(input[0]))
+	for i := range result {
+		result[i] = make([]rune, len(input))
+	}
+
+	for i := range input[0] {
+		for j := range input {
+			result[i][j] = input[j][i]
+		}
+		
+	}
+	return result 
+}
+
+func Print(input [][]rune) {
+	for i := range input {
+		for j := range input[i] {
+			fmt.Print(string(input[i][j]))
+		}
+		fmt.Println()
+	}
 }
