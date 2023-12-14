@@ -11,13 +11,21 @@ func main() {
 	fmt.Println("=====================")
 	input := Parse("input.txt")
 	Print(input)
-	Print(TiltNorth(input))
 	fmt.Print("*  ")
-	fmt.Println(Solve(input))
+	fmt.Println(SolveFirst(input))
+	fmt.Print("*  ")
+	fmt.Println(SolveSecond(input))
 }
 
-func Solve(input [][]rune) int {
+func SolveFirst(input [][]rune) int {
 	input = TiltNorth(input)
+	return Calculate(input)
+}
+
+func SolveSecond(input [][]rune) int {
+	input = Cycle(input)
+	fmt.Println()
+	Print(input)
 	return Calculate(input)
 }
 
@@ -55,7 +63,58 @@ func TiltNorth(input [][]rune) [][]rune {
 		}
 	}
 	return input
-	
+}
+
+func TiltSouth(input [][]rune) [][]rune {
+	for i:=0; i<len(input[0]); i++ {
+		last_free := len(input)-1
+		for j:=len(input)-1; j>=0; j-- {
+			if input[j][i] == '#' {
+				last_free = j-1
+			} else if input[j][i] == 'O' {
+				input[j][i] = '.'
+				input[last_free][i] = 'O'
+				last_free--
+			}
+		}
+	}
+	return input
+}
+
+func TiltWest(input [][]rune) [][]rune {
+	for j:=0; j<len(input); j++ {
+		last_free := 0
+		for i:=0; i<len(input[j]); i++ {
+			if input[j][i] == '#' {
+				last_free = i+1
+			} else if input[j][i] == 'O' {
+				input[j][i] = '.'
+				input[j][last_free] = 'O'
+				last_free++
+			}
+		}
+	}
+	return input
+}
+
+func TiltEast(input [][]rune) [][]rune {
+	for j:=0; j<len(input); j++ {
+		last_free := len(input[j])-1
+		for i:=len(input[j])-1; i>=0; i-- {
+			if input[j][i] == '#' {
+				last_free = i-1
+			} else if input[j][i] == 'O' {
+				input[j][i] = '.'
+				input[j][last_free] = 'O'
+				last_free--
+			}
+		}
+	}
+	return input
+}
+
+func Cycle(input [][]rune) [][]rune {
+	return TiltEast(TiltSouth(TiltWest(TiltNorth(input))))
 }
 
 func Print(input [][]rune) {
