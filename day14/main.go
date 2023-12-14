@@ -17,46 +17,32 @@ func main() {
 }
 
 func SolveFirst(input [][]rune) int {
-	input = TiltNorth(input)
+	TiltNorth(input)
 	return Calculate(input)
 }
 
 func SolveSecond(input [][]rune) int {
-	inCopy := make([][]rune, len(input))
-	for i := range input {
-		inCopy[i] = make([]rune, len(input[i]))
-		for j := range input[i] {
-			inCopy[i][j] = input[i][j]
-		}
-
-	}
 	cycleStart, cycleEnd := FindCycle(input)
 	cycleLen := cycleEnd - cycleStart + 1
         n := 1_000_000_000 - (cycleStart - 1)
 	n = n % cycleLen
-	fmt.Println("overshot", n)
-	fmt.Println("len", cycleLen)
-	for i:= 1; i<=cycleStart-1+n; i++ {
-		inCopy = Cycle(inCopy)
+	for i:= 0; i<n-1; i++ {
+		Cycle(input)
 	}
-
- 
-	return Calculate(inCopy)
+	return Calculate(input)
 }
 
 func FindCycle(input [][]rune) (int, int) {
 	last := make(map[string]int, 0)
 	last[ToKey(input)] = 0
 	for i:= 1; i<1000; i++ {
-		input = Cycle(input)
+		Cycle(input)
 		key := ToKey(input)
 		if value, ok := last[key]; ok {
-			fmt.Println("A cycle!", value, i-1)
 			return value, i-1
 		} else {
 			last[key] = i
 		}
-
 	}
 	return 0, 0
 }
@@ -64,9 +50,14 @@ func FindCycle(input [][]rune) (int, int) {
 func ToKey(input [][]rune) string {
 	key := ""
 	for i := range input {
+		row := 0
 		for j := range input[i] {
-			key += string(input[i][j])
+			row = row << 1
+			if input[i][j] != '.' {
+				row += 1
+			}
 		}
+		key += fmt.Sprint(row)
 	}
 	return key
 }
@@ -91,7 +82,7 @@ func Parse(filename string) [][]rune {
 	return result
 }
 
-func TiltNorth(input [][]rune) [][]rune {
+func TiltNorth(input [][]rune) {
 	for i:=0; i<len(input[0]); i++ {
 		last_free := 0
 		for j:=0; j<len(input); j++ {
@@ -104,10 +95,9 @@ func TiltNorth(input [][]rune) [][]rune {
 			}
 		}
 	}
-	return input
 }
 
-func TiltSouth(input [][]rune) [][]rune {
+func TiltSouth(input [][]rune) {
 	for i:=0; i<len(input[0]); i++ {
 		last_free := len(input)-1
 		for j:=len(input)-1; j>=0; j-- {
@@ -120,10 +110,9 @@ func TiltSouth(input [][]rune) [][]rune {
 			}
 		}
 	}
-	return input
 }
 
-func TiltWest(input [][]rune) [][]rune {
+func TiltWest(input [][]rune) {
 	for j:=0; j<len(input); j++ {
 		last_free := 0
 		for i:=0; i<len(input[j]); i++ {
@@ -136,10 +125,9 @@ func TiltWest(input [][]rune) [][]rune {
 			}
 		}
 	}
-	return input
 }
 
-func TiltEast(input [][]rune) [][]rune {
+func TiltEast(input [][]rune) {
 	for j:=0; j<len(input); j++ {
 		last_free := len(input[j])-1
 		for i:=len(input[j])-1; i>=0; i-- {
@@ -152,11 +140,13 @@ func TiltEast(input [][]rune) [][]rune {
 			}
 		}
 	}
-	return input
 }
 
-func Cycle(input [][]rune) [][]rune {
-	return TiltEast(TiltSouth(TiltWest(TiltNorth(input))))
+func Cycle(input [][]rune) {
+	TiltNorth(input)
+	TiltWest(input)
+	TiltSouth(input)
+	TiltEast(input)
 }
 
 func Print(input [][]rune) {
