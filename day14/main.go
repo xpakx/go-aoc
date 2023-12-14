@@ -22,6 +22,26 @@ func SolveFirst(input [][]rune) int {
 }
 
 func SolveSecond(input [][]rune) int {
+	inCopy := make([][]rune, len(input))
+	for i := range input {
+		inCopy[i] = make([]rune, 0)
+		inCopy[i] = append(inCopy[i], input[i]...)
+
+	}
+	cycleStart, cycleEnd := FindCycle(input)
+	cycleLen := cycleEnd - cycleStart + 1
+        n := 1_000_000_000 - cycleStart
+	cycles := n / cycleLen
+	n -= cycles*cycleLen
+	for i:= 1; i<n; i++ {
+		inCopy = Cycle(inCopy)
+	}
+
+
+	return Calculate(inCopy)
+}
+
+func FindCycle(input [][]rune) (int, int) {
 	last := make(map[string]int, 0)
 	last[ToKey(input)] = 0
 	for i:= 1; i<1000; i++ {
@@ -29,13 +49,13 @@ func SolveSecond(input [][]rune) int {
 		key := ToKey(input)
 		if value, ok := last[key]; ok {
 			fmt.Println("A cycle!", value, i)
-			break;
+			return value, i-1
 		} else {
 			last[key] = i
 		}
 
 	}
-	return Calculate(input)
+	return 0, 0
 }
 
 func ToKey(input [][]rune) string {
