@@ -10,7 +10,6 @@ func main() {
 	fmt.Println("Advent of Code, day 14")
 	fmt.Println("=====================")
 	input := Parse("input.txt")
-	Print(input)
 	fmt.Print("*  ")
 	fmt.Println(SolveFirst(input))
 	fmt.Print("*  ")
@@ -23,10 +22,30 @@ func SolveFirst(input [][]rune) int {
 }
 
 func SolveSecond(input [][]rune) int {
-	input = Cycle(input)
-	fmt.Println()
-	Print(input)
+	last := make(map[string]int, 0)
+	last[ToKey(input)] = 0
+	for i:= 1; i<1000; i++ {
+		input = Cycle(input)
+		key := ToKey(input)
+		if value, ok := last[key]; ok {
+			fmt.Println("A cycle!", value, i)
+			break;
+		} else {
+			last[key] = i
+		}
+
+	}
 	return Calculate(input)
+}
+
+func ToKey(input [][]rune) string {
+	key := ""
+	for i := range input {
+		for j := range input[i] {
+			key += string(input[i][j])
+		}
+	}
+	return key
 }
 
 func Parse(filename string) [][]rune {
