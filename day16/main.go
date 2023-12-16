@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
-	"bufio"
 )
 
 func main() {
@@ -12,11 +12,36 @@ func main() {
 	input := Parse("input.txt")
 	fmt.Print("*  ")
 	fmt.Println(SolveFirst(input))
+	fmt.Print("*  ")
+	fmt.Println(SolveSecond(input))
 }
 
-func SolveFirst(input [][]rune) int {
+func SolveFirst(input[][] rune) int {
+	return Solve(input, Beam{Pos{-1, 0}, Right})
+}
+
+func SolveSecond(input [][]rune) int {
+	results := make([]int, 0)
+	for i:=0; i<len(input); i++ {
+		results = append(results, Solve(input, Beam{Pos{-1, i}, Right}))
+		results = append(results, Solve(input, Beam{Pos{len(input[i]), i}, Left}))
+	}
+	for i:=0; i<len(input[0]); i++ {
+		results = append(results, Solve(input, Beam{Pos{i, -1}, Down}))
+		results = append(results, Solve(input, Beam{Pos{i, len(input)}, Up}))
+	}
+	result := 0 
+	for _, num := range results {
+		if num > result {
+			result = num
+		}
+	}
+	return result
+}
+
+func Solve(input [][]rune, startBeam Beam) int {
 	beams := make([]Beam, 0)
-	beams = append(beams, Beam{Pos{-1,0}, Right})
+	beams = append(beams, startBeam)
 	nextBeams := make([]Beam, 0)
 	hashMap := make(map[Beam]struct{})
 	for len(beams) > 0 {
@@ -39,17 +64,6 @@ func SolveFirst(input [][]rune) int {
 	positions := make(map[Pos]struct{})
 	for key := range hashMap {
 		positions[key.pos] = struct{}{}
-	}
-	fmt.Println()
-	for i := range input {
-		for j := range input[i] {
-			if _, ok := positions[Pos{j,i}]; ok {
-				fmt.Print("\033[30m", string(input[i][j]), "\033[0m")
-			} else {
-				fmt.Print(string(input[i][j]))
-			}
-		}
-		fmt.Println()
 	}
 
 	return len(positions)-1
