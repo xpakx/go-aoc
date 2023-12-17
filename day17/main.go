@@ -12,13 +12,10 @@ func main() {
 	fmt.Println("Advent of Code, day 17")
 	fmt.Println("=====================")
 	input := Parse("input.txt")
-	//fmt.Print("*  ")
-	fmt.Println(Solve(input))
-}
-
-
-func Solve(input [][]int) int {
-	return Dijkstra(input)
+	fmt.Print("*  ")
+	fmt.Println(Dijkstra(input, 0, 3))
+	fmt.Print("** ")
+	fmt.Println(Dijkstra(input, 4, 10))
 }
 
 func Parse(filename string) [][]int {
@@ -64,13 +61,15 @@ const (
 	Down = 3
 )
 
-func Dijkstra(input [][]int) int {
+func Dijkstra(input [][]int, minSteps int, maxSteps int) int {
 	list := make([]Elem, 0)
 	dist := make(map[Key]int)
+	prev := make(map[Key]Key)
+	visited := make(map[Key]struct{})
 	for i := range input {
 		for j := range input[i] {
 			for dir:=0; dir<4; dir++ {
-				for distance:=1; distance<=3; distance++ {
+				for distance:=1; distance<=maxSteps; distance++ {
 					key := Key{Pos{j,i}, dir, distance}
 					dist[key] = math.MaxInt
 					if i != 0 || j != 0 {
@@ -93,8 +92,18 @@ func Dijkstra(input [][]int) int {
 		elem := minElem.(Elem)
 		minNode := elem.key
 		minDist := elem.dist
+		if minDist == math.MaxInt {
+			break
+		}
+		if _, ok := visited[minNode]; ok {
+			continue
+		}
+		visited[minNode] = struct{}{}
 
-		neighbours := GetNeighbours(minNode, len(input[0]), len(input))
+		neighbours := GetNeighbours(minNode, len(input[0]), len(input), minSteps, maxSteps)
+		if len(neighbours) == 0 {
+			dist[minNode] = math.MaxInt
+		}
 		for _, n := range neighbours {
 			nDist := dist[n]
 			alt := minDist + input[n.pos.y][n.pos.x]
@@ -104,47 +113,96 @@ func Dijkstra(input [][]int) int {
 			if alt < nDist {
 				dist[n] = alt
 				heap.Push(queue, Elem{n, alt})
+				prev[n] = minNode
 			}
 		}
 	}
 
 	minValue := math.MaxInt
+	minKey := Key{Pos{0,0}, 0,0}
 	for dir:=0; dir<4; dir++ {
-		for distance:=1; distance<=3; distance++ {
+		for distance:=1; distance<=maxSteps; distance++ {
 			key := Key{Pos{len(input[0])-1,len(input)-1}, dir, distance}
 			if dist[key] < minValue {
 				minValue = dist[key]
+				minKey = key
 			}
 		}
 
 	}
+	path := make(map[Pos]struct{}, 0)
+	path[minKey.pos] = struct{}{}
+	fmt.Println()
+	for true {
+		if value, ok := prev[minKey]; ok {
+			minKey = value
+			path[minKey.pos] = struct{}{}
+
+		} else {
+			break
+		}
+	}
+	for i := range input {
+		for j:= range input[i] {
+			if _, ok := path[Pos{j,i}]; ok {
+				fmt.Printf("\033[35m%3d\033[0m", input[i][i])
+			} else {
+				fmt.Printf("%3d", input[i][i])
+			}
+		}
+		fmt.Println()
+	}
 	return minValue
 }
 
-func GetNeighbours(node Key, width int, height int) []Key {
+func GetNeighbours(node Key, width int, height int, minSteps int, maxSteps int) []Key {
 	n := make([]Key, 0)
-	if node.pos.x > 0 && (node.dir != Left || node.steps < 3) && node.dir != Right {
+	if node.steps < minSteps && node.steps > 0 {
+		newX := node.pos.x
+		x := node.pos.x
+		newY := node.pos.y
+		y := node.pos.y
+		dist := minSteps-node.steps
+		if node.dir == Right {
+			newX+=dist
+			x++
+		} else if node.dir == Left {
+			newX-=dist
+			x--
+		} else if node.dir == Up {
+			newY-=dist
+			y--
+		} else if node.dir == Down {
+			newY+=dist
+			y++
+		}
+		if newX >= 0 && newX < width && newY >=0 && newY < height {
+			n = append(n, Key{Pos{x, y}, node.dir, node.steps+1})
+		}
+		return n
+	}
+	if node.pos.x > 0 && (node.dir != Left || node.steps < maxSteps) && node.dir != Right {
 		steps := node.steps + 1
 		if node.dir != Left {
 			steps = 1
 		}
 		n = append(n, Key{Pos{node.pos.x-1, node.pos.y}, Left, steps})
 	}
-	if node.pos.x < width-1 && (node.dir != Right || node.steps < 3) && node.dir != Left {
+	if node.pos.x < width-1 && (node.dir != Right || node.steps < maxSteps) && node.dir != Left {
 		steps := node.steps + 1
 		if node.dir != Right {
 			steps = 1
 		}
 		n = append(n, Key{Pos{node.pos.x+1, node.pos.y}, Right, steps})
 	}
-	if node.pos.y > 0 && (node.dir != Up || node.steps < 3) && node.dir != Down {
+	if node.pos.y > 0 && (node.dir != Up || node.steps < maxSteps) && node.dir != Down {
 		steps := node.steps + 1
 		if node.dir != Up {
 			steps = 1
 		}
 		n = append(n, Key{Pos{node.pos.x, node.pos.y-1}, Up, steps})
 	}
-	if node.pos.y < height-1 && (node.dir != Down || node.steps < 3) && node.dir != Up {
+	if node.pos.y < height-1 && (node.dir != Down || node.steps < maxSteps) && node.dir != Up {
 		steps := node.steps + 1
 		if node.dir != Down {
 			steps = 1
