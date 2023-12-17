@@ -42,9 +42,9 @@ func SolveSecond(input [][]rune) int {
 func Solve(input [][]rune, startBeam Beam) int {
 	beams := make([]Beam, 0)
 	beams = append(beams, startBeam)
-	nextBeams := make([]Beam, 0)
 	hashMap := make(map[Beam]struct{})
 	for len(beams) > 0 {
+		nextBeams := make([]Beam, 0)
 		for _, beam := range beams {
 			if _, ok := hashMap[beam]; !ok {
 				hashMap[beam] = struct{}{}
@@ -58,7 +58,6 @@ func Solve(input [][]rune, startBeam Beam) int {
 		}
 		beams = nil
 		beams = append(beams, nextBeams...)
-		nextBeams = nil
 	}
 
 	positions := make(map[Pos]struct{})

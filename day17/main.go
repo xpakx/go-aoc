@@ -119,38 +119,14 @@ func Dijkstra(input [][]int, minSteps int, maxSteps int) int {
 	}
 
 	minValue := math.MaxInt
-	minKey := Key{Pos{0,0}, 0,0}
 	for dir:=0; dir<4; dir++ {
 		for distance:=1; distance<=maxSteps; distance++ {
 			key := Key{Pos{len(input[0])-1,len(input)-1}, dir, distance}
 			if dist[key] < minValue {
 				minValue = dist[key]
-				minKey = key
 			}
 		}
 
-	}
-	path := make(map[Pos]struct{}, 0)
-	path[minKey.pos] = struct{}{}
-	fmt.Println()
-	for true {
-		if value, ok := prev[minKey]; ok {
-			minKey = value
-			path[minKey.pos] = struct{}{}
-
-		} else {
-			break
-		}
-	}
-	for i := range input {
-		for j:= range input[i] {
-			if _, ok := path[Pos{j,i}]; ok {
-				fmt.Printf("\033[35m%3d\033[0m", input[i][i])
-			} else {
-				fmt.Printf("%3d", input[i][i])
-			}
-		}
-		fmt.Println()
 	}
 	return minValue
 }
