@@ -72,11 +72,6 @@ func Dijkstra(input [][]int, minSteps int, maxSteps int) int {
 				for distance:=1; distance<=maxSteps; distance++ {
 					key := Key{Pos{j,i}, dir, distance}
 					dist[key] = math.MaxInt
-					if i != 0 || j != 0 {
-						list = append(list, Elem{key, math.MaxInt})
-					} else {
-						dist[key] = input[0][0]
-					}
 				}
 			}
 		}
@@ -92,8 +87,8 @@ func Dijkstra(input [][]int, minSteps int, maxSteps int) int {
 		elem := minElem.(Elem)
 		minNode := elem.key
 		minDist := elem.dist
-		if minDist == math.MaxInt {
-			break
+		if minNode.pos.x == len(input[0])-1 && minNode.pos.y == len(input)-1 && minNode.steps >= minSteps {
+			return minDist
 		}
 		if _, ok := visited[minNode]; ok {
 			continue
@@ -101,9 +96,6 @@ func Dijkstra(input [][]int, minSteps int, maxSteps int) int {
 		visited[minNode] = struct{}{}
 
 		neighbours := GetNeighbours(minNode, len(input[0]), len(input), minSteps, maxSteps)
-		if len(neighbours) == 0 {
-			dist[minNode] = math.MaxInt
-		}
 		for _, n := range neighbours {
 			nDist := dist[n]
 			alt := minDist + input[n.pos.y][n.pos.x]
@@ -117,18 +109,7 @@ func Dijkstra(input [][]int, minSteps int, maxSteps int) int {
 			}
 		}
 	}
-
-	minValue := math.MaxInt
-	for dir:=0; dir<4; dir++ {
-		for distance:=1; distance<=maxSteps; distance++ {
-			key := Key{Pos{len(input[0])-1,len(input)-1}, dir, distance}
-			if dist[key] < minValue {
-				minValue = dist[key]
-			}
-		}
-
-	}
-	return minValue
+	return math.MaxInt
 }
 
 func GetNeighbours(node Key, width int, height int, minSteps int, maxSteps int) []Key {
