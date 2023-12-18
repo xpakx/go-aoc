@@ -12,9 +12,10 @@ func main() {
 	fmt.Println("Advent of Code, day 18")
 	fmt.Println("=====================")
 	input := Parse("input.txt")
-	fmt.Println(input)
 	fmt.Print("*  ")
 	fmt.Println(Solve(input))
+	fmt.Print("** ")
+	fmt.Println(SolveSecond(input))
 }
 
 func Parse(filename string) []Instruction {
@@ -45,9 +46,9 @@ type Instruction struct {
 
 const (
 	Right = 0
-	Left = 1
-	Up = 2
-	Down = 3
+	Left = 2
+	Up = 3
+	Down = 1
 )
 
 func ParseLine(line string) Instruction {
@@ -78,7 +79,7 @@ func ToDir(letter string) int {
 func Solve(input []Instruction) int {
 	length := 0
 	points := make([]Point, 0)
-	points = append(points, Point{0, len(input), ""})
+	points = append(points, Point{0, len(input)})
 	for _, instr := range input {
 		last := points[len(points)-1]
 		dx := 0
@@ -92,7 +93,7 @@ func Solve(input []Instruction) int {
 		} else if instr.dir == Down {
 			dy = -instr.length
 		}
-		points = append(points, Point{last.x+dx, last.y+dy, instr.color})
+		points = append(points, Point{last.x+dx, last.y+dy})
 		length += instr.length
 		
 	}
@@ -105,17 +106,20 @@ func Solve(input []Instruction) int {
 
 	interior := area + 1 - length/2
 
-	fmt.Println(area)
-	fmt.Println(length)
-	fmt.Println(interior)
-
 	return length + interior
+}
+
+func SolveSecond(input []Instruction) int {
+	newInstr := make([]Instruction, 0)
+	for _, inst := range input {
+		newInstr = append(newInstr, inst.Transform())
+	}
+	return Solve(newInstr)
 }
 
 type Point struct {
 	x int
 	y int
-	color string
 }
 
 func Abs(a int) int {
@@ -123,4 +127,11 @@ func Abs(a int) int {
 		return -a
 	}
 	return a
+}
+
+func (instr Instruction) Transform() Instruction {
+	distStr := instr.color[1:6]
+	dir := int(instr.color[6] - '0')
+	dist, _ := strconv.ParseUint(distStr, 16, 64)
+	return Instruction{dir, int(dist), ""}	
 }
