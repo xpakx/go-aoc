@@ -76,26 +76,28 @@ func ToDir(letter string) int {
 	return -1
 }
 
+func (instr Instruction) DirToDelta() (int, int) {
+	if instr.dir == Right {
+		return instr.length, 0
+	} else if instr.dir == Left {
+		return -instr.length, 0
+	} else if instr.dir == Up {
+		return 0, instr.length
+	} else if instr.dir == Down {
+		return 0, -instr.length
+	}
+	return 0, 0 
+}
+
 func Solve(input []Instruction) int {
 	length := 0
 	points := make([]Point, 0)
 	points = append(points, Point{0, len(input)})
 	for _, instr := range input {
 		last := points[len(points)-1]
-		dx := 0
-		dy :=0
-		if instr.dir == Right {
-			dx = instr.length
-		} else if instr.dir == Left {
-			dx = -instr.length
-		} else if instr.dir == Up {
-			dy = instr.length
-		} else if instr.dir == Down {
-			dy = -instr.length
-		}
+		dx, dy := instr.DirToDelta()
 		points = append(points, Point{last.x+dx, last.y+dy})
 		length += instr.length
-		
 	}
 
 	area := 0
@@ -103,9 +105,7 @@ func Solve(input []Instruction) int {
 		area += (points[i].y+points[i+1].y)*(points[i].x-points[i+1].x)
 	}
 	area = Abs(area)/2
-
 	interior := area + 1 - length/2
-
 	return length + interior
 }
 
