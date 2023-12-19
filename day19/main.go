@@ -14,7 +14,9 @@ func main() {
 	fmt.Println("=====================")
 	workflows, parts := Parse("input.txt")
 	fmt.Print("*  ")
-	fmt.Println(Solve(workflows, parts))
+	fmt.Println(SolveFirst(workflows, parts))
+	fmt.Print("** ")
+	fmt.Println(SolveSecond(workflows))
 }
 
 func Parse(filename string) (map[string]Workflow, []Part) {
@@ -134,7 +136,7 @@ func ParsePart(line string) Part {
 	return Part{x, m, a, s}
 }
 
-func Solve(workflows map[string]Workflow, parts []Part) int {
+func SolveFirst(workflows map[string]Workflow, parts []Part) int {
 	result := 0
 	
 	for _, part := range parts {
@@ -180,6 +182,89 @@ func Solve(workflows map[string]Workflow, parts []Part) int {
 				}
 			}
 
+		}
+	}
+	return result
+}
+
+
+func SolveSecond(workflows map[string]Workflow) int {
+	id := "in"
+	boundaries := Boundaries{0, 4001, 0, 4001, 0, 4001, 0, 4001}
+	return SolveRec(workflows, id, boundaries)
+}
+
+type Boundaries struct {
+	xMin int
+	xMax int
+	mMin int
+	mMax int
+	aMin int
+	aMax int
+	sMin int
+	sMax int
+}
+
+func (bnd Boundaries) change(field string, cond_type int, cond_value int) Boundaries {
+	xMin := bnd.xMin
+	if field == "x" && cond_type == Higher && cond_value > xMin {
+		xMin = cond_value
+	}
+	xMax := bnd.xMax
+	if field == "x" && cond_type == Lower && cond_value < xMax {
+		xMax = cond_value
+	}
+	mMin := bnd.mMin
+	if field == "m" && cond_type == Higher && cond_value > mMin {
+		mMin = cond_value
+	}
+	mMax := bnd.mMax
+	if field == "m" && cond_type == Lower && cond_value < mMax {
+		mMax = cond_value
+	}
+	aMin := bnd.aMin
+	if field == "a" && cond_type == Higher && cond_value > aMin {
+		aMin = cond_value
+	}
+	aMax := bnd.aMax
+	if field == "a" && cond_type == Lower && cond_value < aMax {
+		aMax = cond_value
+	}
+	sMin := bnd.sMin
+	if field == "s" && cond_type == Higher && cond_value > sMin {
+		sMin = cond_value
+	}
+	sMax := bnd.sMax
+	if field == "s" && cond_type == Lower && cond_value < sMax {
+		sMax = cond_value
+	}
+	return Boundaries{xMin, xMax, mMin, mMax, aMin, aMax, sMin, sMax}
+}
+
+func (bnd Boundaries) result() int {
+	return (bnd.xMax-bnd.xMin-1)*(bnd.mMax-bnd.mMin-1)*(bnd.aMax-bnd.aMin-1)*(bnd.sMax-bnd.sMin-1)
+}
+
+func SolveRec(workflows map[string]Workflow, id string, boundaries Boundaries) int {
+	workflow := workflows[id]
+	result := 0
+	bnd := boundaries
+	for _, rule := range workflow.rules {
+		if rule.cond_type == 0 {
+			if rule.accept {
+				result += bnd.result()
+			} else if !rule.reject {
+				result += SolveRec(workflows, rule.address, bnd)
+			}
+			break
+		} else {
+			newBoundaries := bnd.change(rule.field, rule.cond_type, rule.cond_value) 
+			if rule.accept {
+				result += newBoundaries.result()
+			} else if ! rule.reject {
+				result += SolveRec(workflows, rule.address, newBoundaries)
+			}
+			bnd = bnd.change(rule.field, -rule.cond_type, rule.cond_value+rule.cond_type)
 		}
 	}
 	return result
