@@ -18,8 +18,9 @@ func main() {
 	fmt.Print("*  ")
 	fmt.Println(SolveFirst(modules))
 	modules = Parse("input.txt")
+	result := SolveSecond(modules)
 	fmt.Print("** ")
-	fmt.Println(SolveSecond(modules))
+	fmt.Println(result)
 }
 
 func Parse(filename string) map[string]Module {
@@ -190,11 +191,11 @@ func Cycle(modules map[string]Module, start string, end string) (int, int, []Pac
 	for len(queue) > 0 {
 		packet := queue[0]
 		queue = queue[1:]
+		if packet.to == end {
+			endNode = append(endNode, packet)
+		}
 		if packet.signal == Low {
 			low++
-			if packet.to == end {
-				endNode = append(endNode, packet)
-			}
 		} else {
 			high++
 		}
@@ -234,16 +235,16 @@ func SolveSecond(modules map[string]Module) int {
 
 	for _, c := range components{
 		i, j, value := c.FindCycle()
-		fmt.Println(c.outputs)
-		fmt.Println(i, j, value)
 		length := j-i
-		fmt.Println(length)
+		fmt.Println("Components ending at", c.outputs, "has cycle", i, "-", j, "of length", length)
+		fmt.Println("Low signals in cycle:", value)
 		cycleLengths = append(cycleLengths, length)
 	}
 
-	// there is only single output for each strongly connected component, each send repetedly Low in cycle starting at first input
-	// also each component is connected to single inverter, and all of those inverters connect to conjunction module, that is 
-	// connected to rx, so it should be possible to calculate result with lcm 
+	// there is only single output for each strongly connected component, each send repeteadly Low n steps before cycle end, and the 
+	// cycle start at n step from start. also each strongly component is connected to single inverter, and all of those inverters 
+	// connect to conjunction module, that is connected to rx, so it should be possible to calculate result with lcm 
+	// Actually, all periods are prime, so lcm isn't even necessary 
 
 	return LCM(cycleLengths)
 }
@@ -425,7 +426,12 @@ func (module ConnectedModule) Proccess(signal Input) (Module, []Output) {
 	return module, result
 }
 
-func (module ConnectedModule) FindCycle() (int, int, []int) {
+type ConnectedResult struct {
+	values []int
+	pos int
+}
+
+func (module ConnectedModule) FindCycle() (int, int, []ConnectedResult) {
 	for module.state < 0 {
 		a, _ := module.Proccess(Input{"broadcast", Low})
 		if md, ok := a.(ConnectedModule); ok {
@@ -433,14 +439,18 @@ func (module ConnectedModule) FindCycle() (int, int, []int) {
 		}
 	}
 	value := module.stateMap[ConnectedKey{module.state, Input{"broadcast", Low}}]
-	output := make([][]int, 0)
+	output := make([]ConnectedResult, 0)
 	for _, v := range module.stateMap {
 		if len(v.outputs) > 0 {
-			output = append(output, v.outputs)
+			for _, a := range v.outputs {
+				if a == 0 {
+					output = append(output, ConnectedResult{v.outputs, v.first})
+
+				}
+			}
 		}
 	}
-	fmt.Println(output)
-	return value.first, module.steps, value.outputs
+	return value.first, module.steps, output
 }
 
 func (module ConnectedModule) Successors() []string {
