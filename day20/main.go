@@ -211,7 +211,15 @@ func Cycle(modules map[string]Module) (int, int, bool) {
 }
 
 func SolveSecond(modules map[string]Module) int {
-	fmt.Println(tarjan(modules))
+	comps := tarjan(modules)
+	fmt.Println(comps)
+	for _, component := range comps {
+		if len(component) > 1 {
+			fmt.Println(component)
+			fmt.Println(InspectComponent(modules, component))
+		}
+	}
+	
 	return 0
 
 }
@@ -284,4 +292,46 @@ func Min(a int, b int) int {
 		return a
 	}
 	return b
+}
+
+func InspectComponent(modules map[string]Module, component []string) ([]string, []string) {
+	inputs := make([]string, 0)
+	outputs := make([]string, 0)
+	for key, node := range modules {
+		inComponent := false
+		for _, a := range component {
+			if key == a {
+				inComponent = true
+				break
+			}
+		}
+		if inComponent {
+			continue
+		}
+		for _, foreign := range node.Successors() {
+			for _, inside := range component {
+				if inside == foreign {
+					inputs = append(inputs, foreign)
+				}
+			}
+		}
+	}
+	for _, node := range component {
+		for _, n := range modules[node].Successors() {
+			insider := false
+			for _, inside := range component {
+				if inside == n {
+					insider = true
+					break
+				}
+			}
+			
+			if !insider {
+				outputs = append(outputs, n)
+			}
+
+		}
+	}
+
+	return inputs, outputs
 }
