@@ -174,26 +174,26 @@ type Packet struct {
 func SolveFirst(modules map[string]Module) int {
 	low, high := 0, 0
 	for i:=0; i<1000; i++ {
-		nlow, nhigh, _ := Cycle(modules)
+		nlow, nhigh, _ := Cycle(modules, "broadcaster", "rx")
 		low +=nlow
 		high +=nhigh
 	}
 	return low*high
 }
 
-func Cycle(modules map[string]Module) (int, int, bool) {
+func Cycle(modules map[string]Module, start string, end string) (int, int, []Packet) {
 	queue := make([]Packet, 0);
-	queue = append(queue, Packet{"button", "broadcaster", Low})
+	queue = append(queue, Packet{"button", start, Low})
 	low := 0
 	high := 0
-	machine := false
+	endNode := make([]Packet, 0)
 	for len(queue) > 0 {
 		packet := queue[0]
 		queue = queue[1:]
 		if packet.signal == Low {
 			low++
-			if packet.to == "rx" {
-				machine = true
+			if packet.to == end {
+				endNode = append(endNode, packet)
 			}
 		} else {
 			high++
@@ -207,31 +207,62 @@ func Cycle(modules map[string]Module) (int, int, bool) {
 			}
 		}
 	}
-	return low, high, machine
+	return low, high, endNode
 }
 
 func SolveSecond(modules map[string]Module) int {
 	comps := tarjan(modules)
 	fmt.Println(comps)
-	compressedGraph := make(map[string]Module)
+	components := make([]ConnectedModule, 0)
 	for _, component := range comps {
 		if len(component) > 1 {
-			fmt.Println(component)
 			inputs, outputs := InspectComponent(modules, component)
-			node := ConnectedModule{outputs, inputs, component, make(map[ConnectedKey]ConnectedValue), modules, -1}
-			for _, key := range inputs {
-				compressedGraph[key] = node
+			fmt.Println()
+			fmt.Println(component, inputs, outputs)
+			modulesNew := make(map[string]Module)
+
+			for key, value := range modules {
+				modulesNew[key] = value
 			}
-		} else {
-			compressedGraph[component[0]] = modules[component[0]]
+			node := ConnectedModule{outputs, inputs, component, make(map[ConnectedKey]ConnectedValue), modulesNew, -1, 1}
+			components = append(components, node)
 		}
 	}
-
-	fmt.Println(len(compressedGraph))
-
 	
-	return 0
 
+	cycleLengths := make([]int, 0)
+
+	for _, c := range components{
+		i, j, value := c.FindCycle()
+		fmt.Println(c.outputs)
+		fmt.Println(i, j, value)
+		length := j-i
+		fmt.Println(length)
+		cycleLengths = append(cycleLengths, length)
+	}
+
+	// there is only single output for each strongly connected component, each send repetedly Low in cycle starting at first input
+	// also each component is connected to single inverter, and all of those inverters connect to conjunction module, that is 
+	// connected to rx, so it should be possible to calculate result with lcm 
+
+	return LCM(cycleLengths)
+}
+
+func GCD(a int, b int) int {
+      for b != 0 {
+              t := b
+              b = a % b
+              a = t
+      }
+      return a
+}
+
+func LCM(nums []int) int {
+      result := nums[0] * nums[1] / GCD(nums[0], nums[1])
+      for i := 2; i < len(nums); i++ {
+              result = LCM([]int{result, nums[i]})
+      }
+      return result
 }
 
 func tarjan(modules map[string]Module) [][]string {
@@ -261,40 +292,40 @@ func strongconnect(
 	onStack map[string]bool,
 	components [][]string,
 	key string) (int, []string, [][]string) {
-	component := make([]string, 0)
-	indices[key] = index
-	lowlinks[key] = index
-	index = index + 1
-	stack = append(stack, key)
-	onStack[key] = true
-	if _, ok := modules[key]; ok {
-		for _, w := range modules[key].Successors() {
-			if _, ok := indices[w]; !ok {
-				i, stck, cmp :=  strongconnect(modules, stack, indices, index, lowlinks, onStack, components, w)
-				components = cmp
-				stack = stck
-				index = i 
-				lowlinks[key] = Min(lowlinks[key], lowlinks[w])
-			} else if value, ok := onStack[w]; ok && value {
-				lowlinks[key] = Min(lowlinks[key], indices[w])
+		component := make([]string, 0)
+		indices[key] = index
+		lowlinks[key] = index
+		index = index + 1
+		stack = append(stack, key)
+		onStack[key] = true
+		if _, ok := modules[key]; ok {
+			for _, w := range modules[key].Successors() {
+				if _, ok := indices[w]; !ok {
+					i, stck, cmp :=  strongconnect(modules, stack, indices, index, lowlinks, onStack, components, w)
+					components = cmp
+					stack = stck
+					index = i 
+					lowlinks[key] = Min(lowlinks[key], lowlinks[w])
+				} else if value, ok := onStack[w]; ok && value {
+					lowlinks[key] = Min(lowlinks[key], indices[w])
+				}
 			}
 		}
-	}
 
-	if lowlinks[key] == indices[key] {
-		for true {
-			w := stack[len(stack)-1]
-			stack = stack[:len(stack)-1]
-			onStack[w] = false
-			component = append(component, w)
-			if w == key {
-				break
+		if lowlinks[key] == indices[key] {
+			for true {
+				w := stack[len(stack)-1]
+				stack = stack[:len(stack)-1]
+				onStack[w] = false
+				component = append(component, w)
+				if w == key {
+					break
+				}
 			}
+			components = append(components, component)
 		}
-		components = append(components, component)
-	}
 
-	return index, stack, components
+		return index, stack, components
 }
 
 func Min(a int, b int) int {
@@ -353,6 +384,7 @@ type ConnectedModule struct {
 	stateMap map[ConnectedKey]ConnectedValue
 	originalModules map[string]Module
 	state int
+	steps int
 }
 
 type ConnectedKey struct {
@@ -362,23 +394,53 @@ type ConnectedKey struct {
 
 type ConnectedValue struct {
 	state int
-	output int
+	outputs []int
+	first int
 }
 
 func (module ConnectedModule) Proccess(signal Input) (Module, []Output) {
 	result := make([]Output, 0)
 	hash := module.GetStateHash()
-	output := -1
+	output := make([]int, 0)
 	if res, ok := module.stateMap[ConnectedKey{hash, signal}]; ok {
-		output = res.output
+		output = res.outputs
 		module.state = res.state
 	} else {
 		// TODO
+		_, _, packets := Cycle(module.originalModules, module.inputs[0], module.outputs[0])
+		newHash := module.GetStateHash()
+		newSignal := -1
+		if len(packets) > 0 {
+			newSignal = packets[0].signal
+			output = append(output, newSignal)
+		}
+		module.stateMap[ConnectedKey{hash, signal}] = ConnectedValue{newHash, output, module.steps}
 	}
-	for _, addr := range module.outputs {
-		result = append(result, Output{addr, output})
+	for _, out := range output {
+		for _, addr := range module.outputs {
+			result = append(result, Output{addr, out})
+		}
 	}
+	module.steps += 1
 	return module, result
+}
+
+func (module ConnectedModule) FindCycle() (int, int, []int) {
+	for module.state < 0 {
+		a, _ := module.Proccess(Input{"broadcast", Low})
+		if md, ok := a.(ConnectedModule); ok {
+			module = md
+		}
+	}
+	value := module.stateMap[ConnectedKey{module.state, Input{"broadcast", Low}}]
+	output := make([][]int, 0)
+	for _, v := range module.stateMap {
+		if len(v.outputs) > 0 {
+			output = append(output, v.outputs)
+		}
+	}
+	fmt.Println(output)
+	return value.first, module.steps, value.outputs
 }
 
 func (module ConnectedModule) Successors() []string {
