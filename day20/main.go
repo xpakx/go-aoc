@@ -174,23 +174,27 @@ type Packet struct {
 func SolveFirst(modules map[string]Module) int {
 	low, high := 0, 0
 	for i:=0; i<1000; i++ {
-		nlow, nhigh := Cycle(modules)
+		nlow, nhigh, _ := Cycle(modules)
 		low +=nlow
 		high +=nhigh
 	}
 	return low*high
 }
 
-func Cycle(modules map[string]Module) (int, int) {
+func Cycle(modules map[string]Module) (int, int, bool) {
 	queue := make([]Packet, 0);
 	queue = append(queue, Packet{"button", "broadcaster", Low})
 	low := 0
 	high := 0
+	machine := false
 	for len(queue) > 0 {
 		packet := queue[0]
 		queue = queue[1:]
 		if packet.signal == Low {
 			low++
+			if packet.to == "rx" {
+				machine = true
+			}
 		} else {
 			high++
 		}
@@ -203,10 +207,81 @@ func Cycle(modules map[string]Module) (int, int) {
 			}
 		}
 	}
-	return low, high
+	return low, high, machine
 }
 
 func SolveSecond(modules map[string]Module) int {
+	fmt.Println(tarjan(modules))
 	return 0
 
+}
+
+func tarjan(modules map[string]Module) [][]string {
+	result := make([][]string, 0)
+	index := 0
+	indices := make(map[string]int, 0)
+	lowlinks := make(map[string]int, 0)
+	onStack := make(map[string]bool, 0)
+	stack := make([]string, 0);
+	for key := range modules {
+		if _, ok := indices[key]; !ok {
+			i, stck, component := strongconnect(modules, stack, indices, index, lowlinks, onStack, result, key)
+			index = i
+			stack = stck
+			result = component
+		}
+	}
+	return result 
+}
+
+func strongconnect(
+	modules map[string]Module,
+	stack []string,
+	indices map[string]int,
+	index int,
+	lowlinks map[string]int,
+	onStack map[string]bool,
+	components [][]string,
+	key string) (int, []string, [][]string) {
+	component := make([]string, 0)
+	indices[key] = index
+	lowlinks[key] = index
+	index = index + 1
+	stack = append(stack, key)
+	onStack[key] = true
+	if _, ok := modules[key]; ok {
+		for _, w := range modules[key].Successors() {
+			if _, ok := indices[w]; !ok {
+				i, stck, cmp :=  strongconnect(modules, stack, indices, index, lowlinks, onStack, components, w)
+				components = cmp
+				stack = stck
+				index = i 
+				lowlinks[key] = Min(lowlinks[key], lowlinks[w])
+			} else if value, ok := onStack[w]; ok && value {
+				lowlinks[key] = Min(lowlinks[key], indices[w])
+			}
+		}
+	}
+
+	if lowlinks[key] == indices[key] {
+		for true {
+			w := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			onStack[w] = false
+			component = append(component, w)
+			if w == key {
+				break
+			}
+		}
+		components = append(components, component)
+	}
+
+	return index, stack, components
+}
+
+func Min(a int, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
