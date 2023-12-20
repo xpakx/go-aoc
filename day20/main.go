@@ -213,12 +213,22 @@ func Cycle(modules map[string]Module) (int, int, bool) {
 func SolveSecond(modules map[string]Module) int {
 	comps := tarjan(modules)
 	fmt.Println(comps)
+	compressedGraph := make(map[string]Module)
 	for _, component := range comps {
 		if len(component) > 1 {
 			fmt.Println(component)
-			fmt.Println(InspectComponent(modules, component))
+			inputs, outputs := InspectComponent(modules, component)
+			node := ConnectedModule{outputs, inputs, component, make(map[ConnectedKey]ConnectedValue), modules, -1}
+			for _, key := range inputs {
+				compressedGraph[key] = node
+			}
+		} else {
+			compressedGraph[component[0]] = modules[component[0]]
 		}
 	}
+
+	fmt.Println(len(compressedGraph))
+
 	
 	return 0
 
@@ -334,4 +344,67 @@ func InspectComponent(modules map[string]Module, component []string) ([]string, 
 	}
 
 	return inputs, outputs
+}
+
+type ConnectedModule struct {
+	outputs []string
+	inputs []string
+	nodes []string
+	stateMap map[ConnectedKey]ConnectedValue
+	originalModules map[string]Module
+	state int
+}
+
+type ConnectedKey struct {
+	state int
+	signal Input
+}
+
+type ConnectedValue struct {
+	state int
+	output int
+}
+
+func (module ConnectedModule) Proccess(signal Input) (Module, []Output) {
+	result := make([]Output, 0)
+	hash := module.GetStateHash()
+	output := -1
+	if res, ok := module.stateMap[ConnectedKey{hash, signal}]; ok {
+		output = res.output
+		module.state = res.state
+	} else {
+		// TODO
+	}
+	for _, addr := range module.outputs {
+		result = append(result, Output{addr, output})
+	}
+	return module, result
+}
+
+func (module ConnectedModule) Successors() []string {
+	return module.outputs
+}
+
+func (module ConnectedModule) GetStateHash() int {
+	if module.state != -1 {
+		return module.state
+	}
+	hash := 1
+	for _, node := range module.nodes {
+			hash = hash << 1
+		if m, ok := module.originalModules[node].(FlipFlopModule); ok {
+			if m.on {
+				hash++
+			}
+		} else if m, ok := module.originalModules[node].(ConjunctionModule); ok {
+			for _, a := range m.addresses {
+				hash  = hash << 1
+				if m.last[a] == Low {
+					hash++
+				}
+			}
+
+		}
+	}
+	return hash
 }
