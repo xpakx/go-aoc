@@ -9,27 +9,28 @@ import (
 func main() {
 	fmt.Println("Advent of Code, day 20")
 	fmt.Println("=====================")
-	board := Parse("input.txt")
+	start, board := GetStart(Parse("input.txt"))
+
 	fmt.Print("*  ")
-	fmt.Println(SolveFirst(board, 64, 0))
-	result := SolveSecond(board, 26501365)
+	fmt.Println(SolveFirst(board, start, 64, 0))
+	result := SolveSecond(board, start, 26501365)
 	fmt.Print("**  ")
 	fmt.Println(result)
 }
 
 func CalcFromCorner(board [][]rune, steps int, modulo int) int {
-	result :=  Solve(board, steps, 0, 0, modulo)  
-	result += Solve(board, steps, len(board)-1, len(board)-1, modulo)
-	result += Solve(board, steps, len(board)-1, 0, modulo)
-	result += Solve(board, steps, 0, len(board)-1, modulo)
+	result :=  Solve(board, Pos{0,0}, steps, modulo)  
+	result += Solve(board, Pos{len(board)-1, len(board)-1}, steps, modulo)
+	result += Solve(board, Pos{len(board)-1, 0}, steps, modulo)
+	result += Solve(board, Pos{0, len(board)-1}, steps, modulo)
 	return result
 }
 
 func CalcFromEdge(board [][]rune, start int, steps int, modulo int) int {
-	t2 := Solve(board, steps, len(board)-1, start, modulo)
-	t2 += Solve(board, steps, 0, start, modulo)
-	t2 += Solve(board, steps, start, len(board)-1, modulo)
-	t2 += Solve(board, steps, start, 0, modulo)
+	t2 := Solve(board, Pos{len(board)-1, start}, steps, modulo)
+	t2 += Solve(board, Pos{0, start}, steps, modulo)
+	t2 += Solve(board, Pos{start, len(board)-1}, steps, modulo)
+	t2 += Solve(board, Pos{start, 0}, steps, modulo)
 	return t2
 }
 
@@ -42,11 +43,11 @@ type Solver struct {
 	ends int
 }
 
-func Prepare(board [][]rune, start int) Solver {
+func Prepare(board [][]rune, start int, startPos Pos) Solver {
 	return Solver{
 		board,
-		SolveFirst(board, 1000, 0),
-		SolveFirst(board, 1000, 1),
+		SolveFirst(board, startPos, 1000, 0),
+		SolveFirst(board, startPos, 1000, 1),
 		CalcFromCorner(board, start+1, 0),
 		CalcFromCorner(board, len(board)+start, 1),
 		CalcFromEdge(board, start, len(board), 1),
@@ -63,7 +64,7 @@ func (s Solver) Solve(n int) int {
 	return result
 }
 
-func SolveSecond(board [][]rune, steps int) int {
+func SolveSecond(board [][]rune, startPos Pos, steps int) int {
 	// Because there are very little obstacles on the board, the explored “boards” are diamond-shaped
 	// and the amount of full boards we visited is equal to the number of dots within a given taxicab distance
 	// So explored area is f(s) = s² + (s-1)². 
@@ -86,8 +87,8 @@ func SolveSecond(board [][]rune, steps int) int {
 	// we could just precompute incomplete boards
 	length := len(board)
 	start := length/2
-	t65 := SolveFirst(board, 65, 0)
-	solver := Prepare(board, start)
+	t65 := SolveFirst(board, startPos, 65, 0)
+	solver := Prepare(board, start, startPos)
 
 	// To make sure it works
 	fmt.Println("after 65", t65, "steps")
@@ -97,6 +98,7 @@ func SolveSecond(board [][]rune, steps int) int {
 
 	return solver.Solve((steps-start)/length)
 }
+
 func Parse(filename string) [][]rune {
 	readFile, err := os.Open(filename)
 
@@ -123,64 +125,24 @@ type Pos struct {
 	j int
 }
 
-func SolveFirst(board [][]rune, maxSteps int, modulo int) int {
-	visited := make([][]int, len(board))
-	start := Pos{0, 0}
+func GetStart(board [][]rune) (Pos, [][]rune) {
 	for i, row := range board {
-		visited[i] = make([]int, len(row))
 		for j := range row {
-			visited[i][j] = -1
 			if row[j] == 'S' {
-				start.i, start.j = i, j
+				board[i][j] = '.'
+				return Pos{i, j}, board
 			}
 		}
 	}
-
-	list := make([]Pos, 0)
-	list = append(list, start)
-	for steps:=0; steps<=maxSteps; steps++ {
-		newList := make([]Pos, 0)
-		for _, pos := range list {
-			if visited[pos.i][pos.j] >= 0 {
-				continue
-			}
-			visited[pos.i][pos.j] = steps
-			if pos.i > 0 && board[pos.i-1][pos.j] == '.' && visited[pos.i-1][pos.j] < 0 {
-				newList = append(newList, Pos{pos.i-1, pos.j})
-			}
-			if pos.i < len(board)-1 && board[pos.i+1][pos.j] == '.' && visited[pos.i+1][pos.j] < 0 {
-				newList = append(newList, Pos{pos.i+1, pos.j})
-			}
-			if pos.j > 0 && board[pos.i][pos.j-1] == '.' && visited[pos.i][pos.j-1] < 0 {
-				newList = append(newList, Pos{pos.i, pos.j-1})
-			}
-			if pos.j < len(board[0])-1 && board[pos.i][pos.j+1] == '.' && visited[pos.i][pos.j+1] < 0 {
-				newList = append(newList, Pos{pos.i, pos.j+1})
-			}
-		}
-		list = nil
-		list = newList
-
-	}
-
-	counter := 0
-	for i := range board {
-		for j := range board[i] {
-			if visited[i][j] % 2 == (modulo + maxSteps) % 2 {
-				// fmt.Print("O")
-				counter++
-			} else {
-				// fmt.Print(string(board[i][j]))
-			}
-		}
-		// fmt.Println()
-	}
-	return counter
+	return Pos{0, 0}, board
 }
 
-func Solve(board [][]rune, maxSteps int, x int, y int, modulo int) int {
+func SolveFirst(board [][]rune, start Pos, maxSteps int, modulo int) int {
+	return Solve(board, start, maxSteps+1, (modulo+1)%2) // we must make one step from „nowhere” to start to preserve numbering
+}
+
+func Solve(board [][]rune, start Pos, maxSteps int, modulo int) int {
 	visited := make([][]int, len(board))
-	start := Pos{x, y}
 	for i, row := range board {
 		visited[i] = make([]int, len(row))
 		for j := range row {
@@ -219,19 +181,12 @@ func Solve(board [][]rune, maxSteps int, x int, y int, modulo int) int {
 	}
 	counter := 0
 
-	// var Reset  = "\033[0m"
-	// var Blue   = "\033[34m"
 	for i := range board {
 		for j := range board[i] {
 			if visited[i][j] % 2 == (modulo + maxSteps) % 2 {
-				// fmt.Print(Blue, "O", Reset)
 				counter++
-			} else {
-				// fmt.Print(string(board[i][j]))
 			}
 		}
-		// fmt.Println()
 	}
-	// fmt.Println()
 	return counter
 }
