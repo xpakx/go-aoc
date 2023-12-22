@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Advent of Code, day 20")
+	fmt.Println("Advent of Code, day 21")
 	fmt.Println("=====================")
 	start, board := GetStart(Parse("input.txt"))
 
@@ -95,6 +95,8 @@ func SolveSecond(board [][]rune, startPos Pos, steps int) int {
 	for i:=1;i<=3;i++ {
 		fmt.Println("after", i*length+start, solver.Solve(i), "steps")
 	}
+
+	fmt.Println(solver)
 
 	return solver.Solve((steps-start)/length)
 }
