@@ -115,6 +115,9 @@ func Intersect(b1, b2 Block) bool {
 		if (BetweenI(x1, x3, x4) && BetweenI(y1, y3, y4)) || (BetweenI(x2, x3, x4) && BetweenI(y2, y3, y4)) {
 			return true
 		}
+		if (BetweenI(x3, x1, x2) && BetweenI(y3, y1, y2)) || (BetweenI(x4, x1, x2) && BetweenI(y4, y1, y2)) {
+			return true
+		}
 		return false
 	}
 
