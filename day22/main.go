@@ -13,8 +13,11 @@ func main() {
 	fmt.Println("=====================")
 	blocks := Parse("input.txt")
 
+	first, second := Solve(blocks)
 	fmt.Print("*  ")
-	fmt.Println(SolveFirst(blocks))
+	fmt.Println(first)
+	fmt.Print("** ")
+	fmt.Println(second)
 }
 
 func Parse(filename string) map[int][]Block {
@@ -168,7 +171,7 @@ func (block Block) MoveToZ(z int) Block {
 	return block
 }
 
-func SolveFirst(blocks map[int][]Block) int {
+func Solve(blocks map[int][]Block) (int, int) {
 	stopped := make(map[int][]Block, 0)
 	maxZ := 0
 
@@ -209,11 +212,13 @@ func SolveFirst(blocks map[int][]Block) int {
 			}
 		}
 	}
-	result := 0
+
+	first := 0
+	dangerous := make([]Block, 0)
 	for _, level := range stopped {
 		for _, block := range level {
 			if len(supports[block]) == 0 {
-				result++
+				first++
 			} else {
 				ok := true
 				for _, b := range supports[block] {
@@ -223,11 +228,63 @@ func SolveFirst(blocks map[int][]Block) int {
 					}
 				}
 				if ok {
-					result++
+					first++
+				} else {
+					dangerous = append(dangerous, block)
 				}
 			}
 		}
 	}
 
-	return result
+
+	second := 0
+	for _, block := range dangerous {
+		lst := make([]Block, 0)
+		all := make([]Block, 0)
+		lst = append(lst, block)
+		all = append(lst, block)
+		for true {
+			levelList := make([]Block, 0)
+			for _, curr := range lst {
+				for _, b := range supports[curr] {
+					outsideSupport := false
+					for _, supporter := range supportedBy[b] {
+						supporterDesintegrated := false
+						for _, last := range all {
+							if last == supporter {
+								supporterDesintegrated = true
+								break
+							}
+						}
+						if !supporterDesintegrated {
+							outsideSupport = true
+							break
+						}
+					}
+					if !outsideSupport {
+						added := false
+						for _, onList := range all {
+							if b == onList {
+								added = true
+								break
+							}
+						}
+						if !added {
+							levelList = append(levelList, b)
+							all = append(all, b)
+						}
+					}
+				}
+
+			}
+			second += len(levelList);
+			lst = nil
+			lst = levelList
+			if len(levelList) == 0 {
+				break
+			}
+		}
+	}
+
+	return first, second
 }
