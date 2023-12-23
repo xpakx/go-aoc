@@ -4,14 +4,15 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"math"
 )
 
 func main() {
 	fmt.Println("Advent of Code, day 23")
 	fmt.Println("=====================")
-	start, _, graph := Parse("input.txt")
+	start, end, graph := Parse("input.txt")
 
-	first, second := Solve(start, graph)
+	first, second := Solve(start, end, graph)
 	fmt.Print("*  ")
 	fmt.Println(first)
 	fmt.Print("** ")
@@ -75,7 +76,7 @@ func Parse(filename string) (Pos, Pos, map[Pos][]Edge) {
 
 			if p.curr == end {
 				fmt.Println("testend")
-				result[p.from] = append(result[p.from], Edge{end, p.length+1})
+				result[p.from] = append(result[p.from], Edge{end, p.length})
 				continue
 			}
 
@@ -164,6 +165,36 @@ type Pos struct {
 	y int
 }
 
-func Solve(start Pos, graph map[Pos][]Edge) (int, int) {
-	return 0, 0
+func Solve(start, end Pos, graph map[Pos][]Edge) (int, int) {
+	return BellmanFord(start, end, graph), 0
+}
+
+func BellmanFord(start Pos, end Pos, graph map[Pos][]Edge) int {
+
+    distance := make(map[Pos]int, 0)
+
+    for key := range graph {
+	    distance[key] = math.MaxInt
+    }
+    
+    distance[start] = 0
+
+    for range graph {
+	    for key := range graph {
+		    for j := range graph[key] {
+			    if distance[key] < math.MaxInt {
+				    distance[graph[key][j].to] = Min(distance[graph[key][j].to], distance[key] - graph[key][j].length)
+			    }
+		    }
+	    }
+    }
+    return -distance[end]
+
+}
+
+func Min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
