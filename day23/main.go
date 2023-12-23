@@ -12,10 +12,11 @@ func main() {
 	fmt.Println("=====================")
 	start, end, graph := Parse("input.txt")
 
-	first, second := Solve(start, end, graph)
+	first := BellmanFord(start, end, graph)
 	fmt.Print("*  ")
 	fmt.Println(first)
 	fmt.Print("** ")
+	second := SolveSecond(start, end, graph)
 	fmt.Println(second)
 }
 
@@ -75,7 +76,6 @@ func Parse(filename string) (Pos, Pos, map[Pos][]Edge) {
 			visited[p.curr] = struct{}{}
 
 			if p.curr == end {
-				fmt.Println("testend")
 				result[p.from] = append(result[p.from], Edge{end, p.length})
 				continue
 			}
@@ -142,21 +142,6 @@ func Parse(filename string) (Pos, Pos, map[Pos][]Edge) {
 		paths = newPaths
 	}
 
-	for i := range board {
-		for j:= range board[i] {
-		   if _, ok := visited[Pos{i,j}]; ok {
-			   fmt.Print("O")
-		   } else {
-			   fmt.Print(string(board[i][j]))
-		   }
-		}
-		fmt.Println()
-	}
-
-
-	fmt.Println(start, end, board)
-	fmt.Println(result)
-	fmt.Println(len(result))
 	return start, end, result
 }
 
@@ -165,35 +150,83 @@ type Pos struct {
 	y int
 }
 
-func Solve(start, end Pos, graph map[Pos][]Edge) (int, int) {
-	return BellmanFord(start, end, graph), 0
+func SolveSecond(start, end Pos, graph map[Pos][]Edge) int {
+	undirGraph := make(map[Pos][]Edge, 0)
+
+	for key := range graph {
+		for j := range graph[key] {
+			undirGraph[key] = append(undirGraph[key], graph[key][j])
+			undirGraph[graph[key][j].to] = append(undirGraph[graph[key][j].to], Edge{key, graph[key][j].length})
+		}
+	}
+
+	maxLength := 0;
+	queue := make([]State, 0)
+	queue = append(queue, State{start, make(map[Pos]struct{}), 0})
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+		if current.node == end {
+			maxLength = Max(maxLength, current.length);
+			continue;
+		}
+		if _, ok := current.visited[current.node]; ok {
+			continue
+		}
+
+		newVisited := make(map[Pos]struct{})
+		for key := range current.visited {
+			newVisited[key] = struct{}{}
+		}
+
+		newVisited[current.node] = struct{}{}
+		for _, edge := range undirGraph[current.node] {
+			queue = append(queue, State{edge.to, newVisited, current.length + edge.length})
+		}
+
+	}
+	return maxLength
 }
 
+type State struct {
+	node Pos
+	visited map[Pos]struct{}
+	length int
+}
+
+// That's acyclic directed graph, so we could use Bellman-Ford algorithm with negated edge weights
 func BellmanFord(start Pos, end Pos, graph map[Pos][]Edge) int {
 
-    distance := make(map[Pos]int, 0)
+	distance := make(map[Pos]int, 0)
 
-    for key := range graph {
-	    distance[key] = math.MaxInt
-    }
-    
-    distance[start] = 0
+	for key := range graph {
+		distance[key] = math.MaxInt
+	}
 
-    for range graph {
-	    for key := range graph {
-		    for j := range graph[key] {
-			    if distance[key] < math.MaxInt {
-				    distance[graph[key][j].to] = Min(distance[graph[key][j].to], distance[key] - graph[key][j].length)
-			    }
-		    }
-	    }
-    }
-    return -distance[end]
+	distance[start] = 0
+
+	for range graph {
+		for key := range graph {
+			for j := range graph[key] {
+				if distance[key] < math.MaxInt {
+					distance[graph[key][j].to] = Min(distance[graph[key][j].to], distance[key] - graph[key][j].length)
+				}
+			}
+		}
+	}
+	return -distance[end]
 
 }
 
 func Min(a, b int) int {
 	if a < b {
+		return a
+	}
+	return b
+}
+
+func Max(a, b int) int {
+	if a > b {
 		return a
 	}
 	return b
