@@ -154,38 +154,42 @@ func SolveSecond(start, end Pos, graph map[Pos][]Edge) int {
 	undirGraph := make(map[Pos][]Edge, 0)
 
 	for key := range graph {
-		for j := range graph[key] {
-			undirGraph[key] = append(undirGraph[key], graph[key][j])
-			undirGraph[graph[key][j].to] = append(undirGraph[graph[key][j].to], Edge{key, graph[key][j].length})
+		pathToEnd := false
+		for j, edge := range graph[key] {
+			if edge.to == end {
+				undirGraph[key] = append(undirGraph[key], graph[key][j])
+				pathToEnd = true
+				break
+			}
+		}
+		if !pathToEnd {
+			for j := range graph[key] {
+				undirGraph[key] = append(undirGraph[key], graph[key][j])
+				if key != start {
+					undirGraph[graph[key][j].to] = append(undirGraph[graph[key][j].to], Edge{key, graph[key][j].length})
+				}
+			}
 		}
 	}
 
-	maxLength := 0;
-	queue := make([]State, 0)
-	queue = append(queue, State{start, make(map[Pos]struct{}), 0})
-	for len(queue) > 0 {
-		current := queue[0]
-		queue = queue[1:]
-		if current.node == end {
-			maxLength = Max(maxLength, current.length);
-			continue;
-		}
-		if _, ok := current.visited[current.node]; ok {
-			continue
-		}
+	return LongestRec(undirGraph, start, end, map[Pos]struct{}{})
+}
 
-		newVisited := make(map[Pos]struct{})
-		for key := range current.visited {
-			newVisited[key] = struct{}{}
-		}
+func LongestRec(graph map[Pos][]Edge, current Pos, end Pos, visited map[Pos]struct{}) int {
+  if current == end {
+	  return 0
+  }
 
-		newVisited[current.node] = struct{}{}
-		for _, edge := range undirGraph[current.node] {
-			queue = append(queue, State{edge.to, newVisited, current.length + edge.length})
-		}
-
-	}
-	return maxLength
+  visited[current] = struct{}{}
+  maxDistance := -10000
+  for _, edge := range graph[current] {
+	  if _, ok := visited[edge.to]; !ok {
+		  dist := LongestRec(graph, edge.to, end, visited) + edge.length
+		  maxDistance = Max(maxDistance, dist)
+	  }
+  }
+  delete(visited, current)
+  return maxDistance;
 }
 
 type State struct {
