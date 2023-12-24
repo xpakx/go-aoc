@@ -17,7 +17,9 @@ func main() {
 	first := Solve(input)
 	fmt.Print("*  ")
 	fmt.Println(first)
-	SolveSecond(input)
+	second := SolveSecond(input)
+	fmt.Print("** ")
+	fmt.Println(second)
 }
 
 func Parse(filename string) []Line {
@@ -159,9 +161,27 @@ func SolveSecond(lines []Line) int {
 			}
 		}
 	}
-	fmt.Println(velocityCandidateX, velocityCandidateY, velocityCandidateZ)
 
-	return 0
+	// TODO: multiple candidates (and zero candidates?)
+	rockVelo := Pos{velocityCandidateX[0], velocityCandidateY[0], velocityCandidateZ[0]}
+
+	// now let's suppose that rock stands in place (its velocity vector would be 0); 
+	// if we adjust lines by its velocity, they should all interesect in that point
+	line1 := lines[0]
+	line1.vector = Pos{line1.vector.x-rockVelo.x, line1.vector.y-rockVelo.y, line1.vector.z-rockVelo.z }
+	line2 := lines[1]
+	line2.vector = Pos{line2.vector.x-rockVelo.x, line2.vector.y-rockVelo.y, line2.vector.z-rockVelo.z }
+
+	intersection := Intersect(line1, line2)
+	line1.start.y = line1.start.z
+	line1.vector.y = line1.vector.z
+	line2.start.y = line2.start.z
+	line2.vector.y = line2.vector.z
+	intersectionZ := Intersect(line1, line2)
+	// TOD: fix. it calculates result correctly for this input, but intersectSlope is a little too imprecise, 
+	// and Intersect have a strange bug sometimes
+
+	return int(intersectionZ.x) + int(intersection.y) + int(intersectionZ.y)
 }
 
 func Abs(a int) int {
@@ -169,7 +189,6 @@ func Abs(a int) int {
 		return -a
 	}
 	return a
-
 }
 
 type Pos struct {
@@ -196,7 +215,7 @@ func IntersectSlope(l, m Line) Intersection {
 		return Intersection{-1, -1}
 	}
 
-	x0 := (float64(l.start.y)-float64(m.start.y)  - float64(l.start.x)*slopeL + float64(m.start.x)*slopeM)/(slopeM-slopeL)
+	x0 := (float64(l.start.y-m.start.y) - float64(l.start.x)*slopeL + float64(m.start.x)*slopeM)/(slopeM-slopeL)
 	y0 := float64(l.start.y) + slopeL*(x0-float64(l.start.x))
 	return Intersection{x0, y0}
 }
