@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func main() {
@@ -16,7 +18,7 @@ func main() {
 	fmt.Println(first)
 }
 
-func Parse(filename string) [][]rune {
+func Parse(filename string) []Line {
 	readFile, err := os.Open(filename)
 
 	if err != nil {
@@ -27,17 +29,79 @@ func Parse(filename string) [][]rune {
 
 	fileScanner.Split(bufio.ScanLines)
 
-	board := make([][]rune, 0)
+	board := make([]Line, 0)
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
-		board = append(board, []rune(line))
+		points := strings.Split(line, " @ ")
+		p := ParseList(points[0])
+		v := ParseList(points[1])
+		board = append(board, Line{Pos{p[0], p[1], p[2]}, Pos{p[0]+v[0], p[1]+v[1], p[2]+v[2]}})
 	}
 	readFile.Close()
 	return board
 }
 
-func Solve(input [][]rune) int {
-	return 0
+func ParseList(list string) []int {
+	splitted := strings.Split(list, ", ")
+	listFin := []int{}
+	for _, x := range splitted {
+		n, _ := strconv.Atoi(strings.TrimSpace(x))
+		listFin = append(listFin, n)
+	}
+	return listFin
+}
+
+
+const (
+	MAX = 400_000_000_000_000
+	MIN = 200_000_000_000_000
+)
+
+func (line Line) UpwardX() bool {
+	return line.coordA.x < line.coordB.x
+}
+
+func (line Line) UpwardY() bool {
+	return line.coordA.y < line.coordB.y
+}
+
+func (line Line) InThePast(intersection Intersection) bool {
+	xInThePast := false
+	if line.UpwardX() {
+		xInThePast = intersection.x < float64(line.coordA.x)
+	} else {
+		xInThePast = intersection.x > float64(line.coordA.x)
+	}
+	yInThePast := false
+	if line.UpwardY() {
+		yInThePast = intersection.y < float64(line.coordA.y)
+	} else {
+		yInThePast = intersection.y > float64(line.coordA.y)
+	}
+	return xInThePast || yInThePast
+}
+
+func Solve(lines []Line) int {
+	result := 0
+	for i:=0; i<len(lines)-1; i++{
+		for j:=i+1; j<len(lines); j++ {
+			intersection := Intersect(lines[i].coordA, lines[i].coordB, lines[j].coordA, lines[j].coordB)
+			if intersection.x == -1 {
+				continue
+			}
+			if intersection.x < MIN || intersection.y < MIN || intersection.x > MAX || intersection.y > MAX  {
+				continue
+			}
+			if lines[i].InThePast(intersection) {
+				continue
+			}
+			if lines[j].InThePast(intersection) {
+				continue
+			}
+			result++
+		}
+	}
+	return result
 }
 
 type Pos struct {
@@ -52,8 +116,8 @@ type Line struct {
 }
 
 type Intersection struct {
-	x int 
-	y int
+	x float64 
+	y float64
 }
 
 func Intersect(a1, a2, b1, b2 Pos) Intersection {
@@ -77,11 +141,7 @@ func Intersect(a1, a2, b1, b2 Pos) Intersection {
 	x0 := float64(a)/float64(denominator)
 	y0 := float64(b)/float64(denominator)
 
-	if Between(x0, x1, x2) && Between(y0, y1, y2) && Between(x0, x3, x4) && Between(y0, y3, y4) {
-		return Intersection{int(x0), int(y0)}
-	}
-	
-	return Intersection{-1, -1}
+	return Intersection{x0, y0}
 }
 
 func Between(x float64, x1, x2 int) bool {
