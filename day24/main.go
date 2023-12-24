@@ -17,6 +17,7 @@ func main() {
 	first := Solve(input)
 	fmt.Print("*  ")
 	fmt.Println(first)
+	SolveSecond(input)
 }
 
 func Parse(filename string) []Line {
@@ -107,6 +108,70 @@ func Solve(lines []Line) int {
 	return result
 }
 
+func SolveSecond(lines []Line) int {
+	velocityCandidateX := make([]int, 0)
+	velocityCandidateY := make([]int, 0)
+	velocityCandidateZ := make([]int, 0)
+	for i:=0; i<len(lines)-1; i++{
+		for j:=i+1; j<len(lines); j++ {
+			if lines[i].vector.x == lines[j].vector.x {
+				// they're always equidistant in coordinate x 
+				dist := Abs(lines[i].start.x-lines[j].start.x)
+				newVelos := make([]int, 0)
+				for a:=-300; a<=300; a++ {
+					if a != lines[i].vector.x && dist%(a-lines[i].vector.x)==0 {
+						newVelos = append(newVelos, a)
+					}
+				}
+				if len(velocityCandidateX) > 0 {
+					velocityCandidateX = SetIntersection(velocityCandidateX, newVelos)
+				} else {
+					velocityCandidateX = newVelos
+				}
+			}
+			if lines[i].vector.y == lines[j].vector.y {
+				dist := Abs(lines[i].start.y-lines[j].start.y)
+				newVelos := make([]int, 0)
+				for a:=-300; a<=300; a++ {
+					if a != lines[i].vector.y && dist%(a-lines[i].vector.y)==0 {
+						newVelos = append(newVelos, a)
+					}
+				}
+				if len(velocityCandidateY) > 0 {
+					velocityCandidateY = SetIntersection(velocityCandidateY, newVelos)
+				} else {
+					velocityCandidateY = newVelos
+				}
+			}
+			if lines[i].vector.z == lines[j].vector.z {
+				dist := Abs(lines[i].start.z-lines[j].start.z)
+				newVelos := make([]int, 0)
+				for a:=-300; a<=300; a++ {
+					if a != lines[i].vector.z && dist%(a-lines[i].vector.z)==0 {
+						newVelos = append(newVelos, a)
+					}
+				}
+				if len(velocityCandidateZ) > 0 {
+					velocityCandidateZ = SetIntersection(velocityCandidateZ, newVelos)
+				} else {
+					velocityCandidateZ = newVelos
+				}
+			}
+		}
+	}
+	fmt.Println(velocityCandidateX, velocityCandidateY, velocityCandidateZ)
+
+	return 0
+}
+
+func Abs(a int) int {
+	if a < 0 {
+		return -a
+	}
+	return a
+
+}
+
 type Pos struct {
 	x int 
 	y int 
@@ -158,6 +223,20 @@ func Intersect(l, m Line) Intersection {
 	y0 := float64(b)/float64(denominator)
 
 	return Intersection{x0, y0}
+}
+
+func SetIntersection(list []int, list2 []int) []int {
+	set := make([]int, 0)
+	hash := make(map[int]struct{})
+	for _, num := range list {
+		hash[num] = struct{}{}
+	}
+	for _, num := range list2 {
+		if _, ok := hash[num]; ok {
+			set = append(set, num)
+		}
+	}
+	return set
 }
 
 func Between(x float64, x1, x2 int) bool {
